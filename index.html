@@ -117,6 +117,58 @@
   .mdoc .wl:hover{border-bottom-style:solid}
   .mdoc input[type=checkbox]{accent-color:var(--acc);margin-right:6px}
 
+  .dstat{border:1px solid var(--line);background:rgba(18,21,26,.65);padding:13px 16px;margin:0 0 18px;
+    clip-path:polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)}
+  .dstat .dr{display:flex;gap:14px;padding:4.5px 0;align-items:baseline}
+  .dstat b{font:400 9px ui-monospace,Consolas,monospace;letter-spacing:.18em;color:var(--ink3);
+    text-transform:uppercase;width:96px;flex-shrink:0}
+  .dstat span{font-size:12.5px;color:var(--ink2);line-height:1.5}
+  .dstat .ok span{color:var(--ok)}
+  .dstat .warm span{color:var(--warm)}
+  .dstat .alert span{color:var(--alert)}
+  .dstat .acc span{color:var(--acc3)}
+  .dstat .steel span{color:var(--ink3)}
+  .vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 16px}
+  .vtile{border:1px solid var(--line);background:rgba(18,21,26,.65);padding:12px 14px 11px;position:relative;
+    clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)}
+  .vtile::before{content:'';position:absolute;top:0;left:0;width:2px;height:100%;background:var(--noteC,var(--acc));opacity:.75}
+  .vtile .k{font:400 8.5px ui-monospace,Consolas,monospace;letter-spacing:.16em;color:var(--ink3);
+    text-transform:uppercase;margin-bottom:6px}
+  .vtile .v{font-family:'Oswald',sans-serif;font-style:italic;font-weight:600;font-size:21px;
+    letter-spacing:.03em;color:var(--ink);line-height:1.15}
+  .vtile .m{font-size:10.5px;color:var(--ink2);margin-top:4px;line-height:1.45}
+  .vchart{border:1px solid var(--line);background:rgba(13,16,20,.6);padding:14px 14px 6px;margin:0 0 16px;
+    clip-path:polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)}
+  .vchart .ct{font:400 9px ui-monospace,Consolas,monospace;letter-spacing:.2em;color:var(--ink3);
+    text-transform:uppercase;margin-bottom:8px}
+  .vchart svg{width:100%;height:auto;display:block}
+  .flowrow{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0 0 16px}
+  .fstep{font:400 9.5px ui-monospace,Consolas,monospace;letter-spacing:.1em;color:var(--ink2);
+    border:1px solid var(--line);background:rgba(18,21,26,.75);padding:8px 11px;text-transform:uppercase;
+    clip-path:polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)}
+  .farr{color:var(--noteC,var(--acc));font-size:12px;font-family:ui-monospace,Consolas,monospace}
+  .vboard{border:1px solid var(--line);background:rgba(18,21,26,.65);margin:0 0 16px;
+    clip-path:polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)}
+  .vboard .bt{font:400 9px ui-monospace,Consolas,monospace;letter-spacing:.2em;color:var(--ink3);
+    text-transform:uppercase;padding:11px 14px 2px}
+  .brow{display:flex;justify-content:space-between;gap:12px;padding:9px 14px;border-bottom:1px solid var(--line);
+    align-items:baseline}
+  .brow:last-child{border-bottom:none}
+  .brow b{font:400 10px ui-monospace,Consolas,monospace;letter-spacing:.1em;color:var(--ink2);
+    text-transform:uppercase;font-weight:400}
+  .brow span{font:600 9.5px ui-monospace,Consolas,monospace;letter-spacing:.12em;text-align:right}
+  .b-ok span{color:var(--ok)} .b-warm span{color:var(--warm)}
+  .b-alert span{color:var(--alert)} .b-steel span{color:var(--ink3)}
+  details.fullnote{margin-top:4px}
+  details.fullnote summary{cursor:pointer;font:600 9.5px ui-monospace,Consolas,monospace;letter-spacing:.18em;
+    color:var(--ink3);text-transform:uppercase;padding:11px 0 9px;border-top:1px solid var(--line);
+    list-style:none;display:flex;gap:9px;align-items:center}
+  details.fullnote summary::-webkit-details-marker{display:none}
+  details.fullnote summary::before{content:"+";color:var(--acc);font-size:13px}
+  details.fullnote[open] summary::before{content:"\2212"}
+  details.fullnote summary:hover{color:var(--ink)}
+  details.fullnote .mdoc{padding-top:8px}
+
   #composer{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:12;
     display:none;align-items:center;gap:8px;width:min(600px,92vw)}
   #composer.on{display:flex}
@@ -195,6 +247,8 @@
     .side.left{margin-top:2px}
     .side.right{margin-top:16px;margin-bottom:8px}
     .scard{min-height:0}
+    .weavewrap path{stroke-width:1.35}
+    .weavewrap>circle{opacity:.14}
     body.drawer-open .side.right{opacity:1;pointer-events:auto}
     .crumb{display:none}
     .ctl{position:fixed;bottom:calc(64px + env(safe-area-inset-bottom,0px));right:10px}
@@ -257,7 +311,7 @@
   <div id="d-title"></div>
   <span class="chip-status" id="d-status"></span>
   <div id="d-sum"></div>
-  <div id="d-body"><div class="lbl">From the Note</div><div id="d-body-t" class="mdoc"></div></div>
+  <div id="d-body"><div class="lbl">Desk View</div><div id="d-body-t" class="mdoc"></div></div>
 </div></div>
 
 <div id="composer">
@@ -1034,7 +1088,7 @@ function twoLines(t){
   return [a, b];
 }
 
-let mode = "home", focusEmp = null, showX = false;
+let mode = "home", focusEmp = null, showX = false, IS_PORTRAIT = false;
 const CX = 600, CY = 410;
 const svg = document.getElementById("scene");
 const NS = "http://www.w3.org/2000/svg";
@@ -1240,7 +1294,8 @@ function layoutFocus(emp){
       {r:15, fill:"var(--bg)", lines:[q.emp.toUpperCase()], ns:9.5, op:.5, oc:OFFICE_COLOR[q.dir]});
   });
   if (emp !== "Maddox")
-    place("Maddox", 95, 112, {r:25, lines:["MADDOX"], ns:10, role:"RETURN.TO.GRID", active:true, hideDot:true});
+    place("Maddox", IS_PORTRAIT ? 237 : 95, IS_PORTRAIT ? 100 : 112,
+      {r: IS_PORTRAIT ? 22 : 25, lines:["MADDOX"], ns:10, role:"RETURN.TO.GRID", active:true, hideDot:true});
   if (showX) drawCross(o);
 }
 
@@ -1328,6 +1383,110 @@ function wireWikilinks(root){
     else w.style.cssText = "color:var(--ink2);border-bottom:none;cursor:default";
   });
 }
+function parseDesk(md){
+  const m = md.match(/\n## Desk Status\n([\s\S]*?)(?=\n## |$)/);
+  if (!m) return {rows:[], md};
+  const rows = [];
+  m[1].split("\n").forEach(L=>{
+    const r = L.match(/^-\s*(state|last|watch|issue|rec):\s*(.+)$/i);
+    if (r) rows.push([r[1].toLowerCase(), r[2].trim()]);
+  });
+  return {rows, md: md.replace(m[0], "\n")};
+}
+function deskBoard(rows){
+  const lab = {state:"State", last:"Last Run", watch:"Watch", issue:"Issues", rec:"Recommends"};
+  const cls = {state:"ok", last:"", watch:"warm", issue:"alert", rec:"acc"};
+  return '<div class="dstat">' + rows.map(r=>{
+    let c = cls[r[0]] || "";
+    if ((r[0] === "issue" || r[0] === "rec") && /^none/i.test(r[1])) c = "steel";
+    return '<div class="dr ' + c + '"><b>' + lab[r[0]] + '</b><span>' + escH(r[1]) + '</span></div>';
+  }).join("") + '</div>';
+}
+const VIZ = {
+  close_rate_collapse_2026_08_09: [
+    {t:"tiles", items:[["7-DAY CLOSE // JUL","31.2%","April was 62.9%"],["ON THE TABLE","$21.5K/MO","gross profit"],["DEAD >14 DAYS","$1.31M","276 drafts"]]},
+    {t:"bars", title:"7-Day Close Rate by Month", unit:"%", pts:[["APR",62.9],["MAY",42.2],["JUN",38.1],["JUL",31.2]]},
+    {t:"txt", x:"Not seasonal. July set a record 96 drafts / $432K created. Median close is under an hour every month. What doesn't close fast is dying on the pile."}],
+  quote_close_rate_2026_08_09: [
+    {t:"tiles", items:[["DRAFTS SINCE MAY 1","250",""],["COMPLETED","101","40.4%"],["STILL OPEN","127",""],["INVOICE UNPAID","22",""]]},
+    {t:"bars", title:"Where the 250 Drafts Stand", unit:"", pts:[["CLOSED",101],["OPEN",127],["UNPAID",22]]},
+    {t:"txt", x:"~50 unclosed quotes a month is the biggest untapped pool in the business. Piper answers these from a Slack reply now."}],
+  net_profit_source_and_trend: [
+    {t:"tiles", items:[["NET // JUL","$14,611","6.6% margin"],["PEAK // APR","$40,455","12.8% margin"],["AD SPEND % REV","12.7%","was 7.9% in Apr"]]},
+    {t:"bars", title:"Net Profit by Month ($K)", fmt:"$", unit:"K", pts:[["JAN",10.1],["FEB",35],["MAR",31.4],["APR",40.5],["MAY",33.9],["JUN",15.2],["JUL",14.6]]},
+    {t:"txt", x:"The squeeze is volume + ad cost, not per-deal margin. PMax rolled back to $350/day on July 14. Profit source of truth is the Order Tracker, never Shopify gross."}],
+  ads_changes_2026_08_10: [
+    {t:"board", title:"The Freeze List", items:[
+      ["PMax budget","$350/DAY · LOCKED","alert"],
+      ["Google & YouTube product sync","OFF · KEEP OFF","steel"],
+      ["Merchant Center source","SIMPROSYS ONLY","ok"],
+      ["Canada","ON VIA SIMPROSYS CAD","ok"],
+      ["MC sale price suggestions","NEVER ACCEPT · MAP TRAP","alert"],
+      ["FB manual remarketing","PAUSED","steel"],
+      ["Winners HP mobile bid","-50% · KEEP","alert"]]},
+    {t:"tiles", items:[["CPC SINCE OCT '25","+69%","$0.96 → $1.62"],["JUL IMPRESSIONS","1.06M","3rd highest of 12 mo"]]}],
+  google_ads_campaign_structure: [
+    {t:"flow", steps:["BROAD // HP","BRAND // MP","SKU // LP"]},
+    {t:"bars", title:"Break-Even ROAS After COGS", unit:"x", pts:[["4H110",3.63],["4H850",5.22],["2-POST",6.1],["BLENDED",4.37]]},
+    {t:"txt", x:"HP, MP, LP is priority, not price. HP is a cheap sponge by design. Fix it with bids and negatives, never with pause."}],
+  po_branch_live_2026_08_10: [
+    {t:"flow", steps:["ORDER LANDS","PO DOC + PDF","SUPPLIER EMAIL","TRACKER ROW","CRM MOVE","SLACK PING"]},
+    {t:"tiles", items:[["THIS WEEK","4 PO'S","end to end"],["HALTED","0","answer reader clears"],["CYCLE","1 MIN","checkSlackAnswers first"]]}],
+  quote_worker_live_2026_08_10: [
+    {t:"flow", steps:["SLACK REPLY","DRAFT ORDER","EMAIL DRAFT","SMS + LINK"]},
+    {t:"tiles", items:[["PROVEN ON","KENT GRADY","$1,299.99 from one reply"],["TAX RULES","GA / IL","nexus only"],["HALTS TO MANUAL","3 CASES","multi · wire · no pickup loc"]]}],
+  gclid_sweeper_automation: [
+    {t:"flow", steps:["05:00 SWEEP","MATCH BY IP","PULL CLICK ID","UPLOAD ROW","GOOGLE 6AM"]},
+    {t:"tiles", items:[["COVERAGE","65%","of quote forms carry a click ID"],["KEYED / 30D","$47,106","Google now gets credit"],["CADENCE","DAILY","5:00 AM ET · support@"]]}],
+  backlink_audit_2026_08_10: [
+    {t:"tiles", items:[["TOXIC DOMAINS","1","rdxextremez · PBN"],["PRESS WIRE","NOFOLLOW","harmless"],["ALIBABA LINKS","AS 80","assets · never disavow"]]},
+    {t:"txt", x:"Narrow disavow only. Nothing was disavowed yet. The button is locked while the recrawl runs."}],
+  feed_consolidation_plan: [
+    {t:"flow", steps:["2 COMPETING FEEDS","SIMPROSYS ONLY"]},
+    {t:"tiles", items:[["SOURCES NOW","1","conflict dead"],["PLAN","$8.99","1,000 products"],["STORE","617","products"]]}],
+  roadmap_voice_and_meetings: [
+    {t:"flow", steps:["PER-EMPLOYEE VOICES","BOARD MEETINGS","SELF-WRITING NOTES"]},
+    {t:"tiles", items:[["VISUALIZER","SHIPPED","the weave reacts via setSpeaking"],["VOICES","ELEVENLABS","licensed only"],["NEXT","API KEYS","then the desks talk back"]]}],
+};
+function vizTiles(bk){
+  return '<div class="vgrid">' + bk.items.map(t=>
+    '<div class="vtile"><div class="k">' + t[0] + '</div><div class="v">' + t[1] + '</div>' +
+    (t[2] ? '<div class="m">' + t[2] + '</div>' : '') + '</div>').join("") + '</div>';
+}
+function vizBars(bk, color){
+  const W = 560, H = 172, padB = 24, padT = 20, padL = 6;
+  const max = Math.max(...bk.pts.map(p=>p[1])) * 1.18;
+  const step = (W - padL*2) / bk.pts.length;
+  const bw = Math.min(64, step * .55);
+  let s = '<div class="vchart"><div class="ct">' + bk.title + '</div><svg viewBox="0 0 ' + W + ' ' + H + '">';
+  s += '<line x1="0" y1="' + (H-padB) + '" x2="' + W + '" y2="' + (H-padB) + '" stroke="#20252C"/>';
+  bk.pts.forEach((p,i)=>{
+    const bh = (p[1] / max) * (H - padB - padT);
+    const x = padL + step*i + (step - bw)/2, y = H - padB - bh;
+    s += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="2" fill="' + color + '" opacity=".82"/>';
+    s += '<text x="' + (x + bw/2).toFixed(1) + '" y="' + (y - 7).toFixed(1) + '" text-anchor="middle" font-size="11" font-weight="600" fill="#EDF1F4" font-family="ui-monospace,Consolas,monospace">' + (bk.fmt || "") + p[1] + (bk.unit || "") + '</text>';
+    s += '<text x="' + (x + bw/2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="9" fill="#59626C" font-family="ui-monospace,Consolas,monospace" letter-spacing="1.5">' + p[0] + '</text>';
+  });
+  return s + '</svg></div>';
+}
+function vizFlow(bk){
+  return '<div class="flowrow">' + bk.steps.map(s=>'<span class="fstep">' + s + '</span>')
+    .join('<span class="farr">▸</span>') + '</div>';
+}
+function vizBoard(bk){
+  return '<div class="vboard">' + (bk.title ? '<div class="bt">' + bk.title + '</div>' : '') +
+    bk.items.map(r=>'<div class="brow b-' + r[2] + '"><b>' + r[0] + '</b><span>' + r[1] + '</span></div>').join("") + '</div>';
+}
+function buildViz(id, color){
+  return (VIZ[id] || []).map(bk=>{
+    if (bk.t === "tiles") return vizTiles(bk);
+    if (bk.t === "bars") return vizBars(bk, color);
+    if (bk.t === "flow") return vizFlow(bk);
+    if (bk.t === "board") return vizBoard(bk);
+    if (bk.t === "txt") return '<p style="font-size:12px;color:var(--ink2);line-height:1.65;margin:0 0 16px">' + bk.x + '</p>';
+    return "";
+  }).join("");
+}
 function openDrawer(n){
   const o = byDir[n.office];
   const meta = META[n.id] || (n.id.endsWith("_inbox")
@@ -1343,8 +1502,20 @@ function openDrawer(n){
   const bt = document.getElementById("d-body-t");
   bt.innerHTML = '<span style="color:var(--ink3)">loading the note…</span>';
   noteContent(n.path).then(c=>{
-    bt.innerHTML = c ? renderMD(c)
-      : '<span style="color:var(--ink3)">Could not load the note right now. It lives in the brain at ' + escH(n.path) + '</span>';
+    let html = "";
+    if (c){
+      const color = OFFICE_COLOR[n.office] || "#00A1CF";
+      const ds = parseDesk(c);
+      if (ds.rows.length) html += deskBoard(ds.rows);
+      if (VIZ[n.id]) html += buildViz(n.id, color);
+      const noteHtml = renderMD(ds.md);
+      if (VIZ[n.id] || ds.rows.length)
+        html += '<details class="fullnote"><summary>Read the Full Note</summary><div class="mdoc">' + noteHtml + '</div></details>';
+      else html += noteHtml;
+    } else {
+      html = '<span style="color:var(--ink3)">Could not load the note right now. It lives in the brain at ' + escH(n.path) + '</span>';
+    }
+    bt.innerHTML = html;
     wireWikilinks(bt);
     document.getElementById("pbox").scrollTop = 0;
   });
@@ -1601,7 +1772,10 @@ document.getElementById("msgin").addEventListener("keydown", e=>{
 function fitScene(){
   const r = document.getElementById("stage").getBoundingClientRect();
   const portrait = (r.width || innerWidth) / (r.height || innerHeight) < .92;
+  const flip = portrait !== IS_PORTRAIT;
+  IS_PORTRAIT = portrait;
   svg.setAttribute("viewBox", portrait ? "150 -20 900 880" : "0 0 1200 820");
+  if (flip && mode === "focus") layoutFocus(focusEmp);
 }
 fitScene(); addEventListener("resize", fitScene);
 setTimeout(fitScene, 60);
