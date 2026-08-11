@@ -120,7 +120,7 @@
 </div>
 
 <script src="https://unpkg.com/3d-force-graph@1.73.4/dist/3d-force-graph.min.js"></script>
-<script src="https://unpkg.com/three-spritetext@1.8.2/dist/three-spritetext.min.js"></script>
+<script src="https://unpkg.com/three-spritetext@1.6.5/dist/three-spritetext.min.js"></script>
 <script>
 const REPO = "https://github.com/thehuntersamuel/pitstop-pro-brain/blob/main/";
 const HQ_FN = "https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq";
@@ -221,7 +221,7 @@ G = ForceGraph3D()(el)
       <b>${n.id.replace(/_/g," ")}</b><br><span style="color:#A8B0BC">${n.officeName}</span></div>`)
   .nodeThreeObjectExtend(true)
   .nodeThreeObject(n=>{
-    if(n.kind!=="employee") return false;
+    if(n.kind!=="employee" || typeof SpriteText==="undefined") return false;
     const t = new SpriteText(n.id, n.id==="Maddox"?7:5.5, "#E9ECF1");
     t.fontWeight = "700"; t.backgroundColor = "rgba(14,16,20,.55)";
     t.padding = 2; t.borderRadius = 3; t.position.y = -(n.val+7);
