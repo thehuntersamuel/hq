@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Pitstop Brain — Maddox HQ</title>
+<style>
+  :root{
+    --bg:#0E1014; --panel:#151920; --panel2:#1B2029; --line:#242B36;
+    --ink:#E9ECF1; --ink2:#A8B0BC; --ink3:#6B7480;
+    --gold:#E8C468; --alert:#E06C5B; --ok:#70AD8E;
+    --r:10px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg);color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:'SF Mono',ui-monospace,'Cascadia Mono',Consolas,monospace}
+
+  .wrap{max-width:1280px;margin:0 auto;padding:0 28px}
+
+  header{display:flex;align-items:center;justify-content:space-between;
+    padding:26px 0 22px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:baseline;gap:14px}
+  .brand h1{font-size:19px;font-weight:800;letter-spacing:.14em}
+  .brand h1 .accent{color:var(--gold)}
+  .brand .sub{font-size:12.5px;color:var(--ink2);letter-spacing:.04em}
+  .status{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink2)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ink3)}
+  .dot.on{background:var(--ok);box-shadow:0 0 0 3px rgba(112,173,142,.15)}
+  .dot.off{background:var(--alert)}
+
+  .tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:22px 0}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:14px 16px 12px}
+  .tile .k{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink3)}
+  .tile .v{font-size:26px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums}
+  .tile .m{font-size:11.5px;color:var(--ink2);margin-top:2px}
+  .tile.warn .v{color:var(--alert)}
+
+  .main{display:grid;grid-template-columns:340px 1fr;gap:12px;margin-bottom:12px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+  .panel .hd{padding:14px 16px 10px;border-bottom:1px solid var(--line);
+    font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+  .org{padding:6px 0 10px}
+  .emp{display:flex;align-items:center;gap:12px;padding:9px 16px;cursor:pointer;
+    border-left:2px solid transparent}
+  .emp:hover{background:var(--panel2)}
+  .emp.active{background:var(--panel2);border-left-color:var(--gold)}
+  .chip{width:10px;height:10px;border-radius:3px;flex:none}
+  .emp .nm{font-size:14px;font-weight:600;width:64px}
+  .emp .role{font-size:12px;color:var(--ink2);flex:1}
+  .emp .ct{font-size:11px;color:var(--ink3)}
+  .emp.boss{padding:13px 16px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  .emp.boss .nm{font-size:15px;font-weight:800;color:var(--gold)}
+
+  #g3d{height:620px;border-radius:var(--r);overflow:hidden;position:relative}
+  #g3d .hint{position:absolute;bottom:10px;right:14px;font-size:11px;color:var(--ink3);
+    z-index:5;pointer-events:none}
+
+  .offices{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:0 0 26px}
+  .office .hd{display:flex;align-items:center;gap:10px;text-transform:none;
+    font-size:13px;font-weight:700;letter-spacing:0;color:var(--ink)}
+  .office .hd .tag{font-size:11px;color:var(--ink3);font-weight:500;margin-left:auto}
+  .office ul{list-style:none;padding:8px 8px 10px}
+  .office li a{display:block;padding:7px 9px;border-radius:6px;font-size:13px;color:var(--ink2)}
+  .office li a:hover{background:var(--panel2);color:var(--ink)}
+  .office li a .fn{color:var(--ink)}
+  .office li a .d{font-size:11.5px;color:var(--ink3);margin-top:1px}
+
+  footer{border-top:1px solid var(--line);padding:18px 0 30px;
+    display:flex;justify-content:space-between;font-size:12px;color:var(--ink3)}
+  footer a{color:var(--ink2)} footer a:hover{color:var(--ink)}
+
+  @media(max-width:980px){
+    .tiles{grid-template-columns:repeat(3,1fr)}
+    .main{grid-template-columns:1fr}
+    .offices{grid-template-columns:1fr}
+    #g3d{height:440px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>PITSTOP <span class="accent">BRAIN</span></h1>
+      <span class="sub">Maddox HQ · every office, every rule, one web</span>
+    </div>
+    <div class="status"><span class="dot" id="hubdot"></span><span id="hubtxt">connecting…</span></div>
+  </header>
+
+  <div class="tiles">
+    <div class="tile"><div class="k">Leads · Today</div><div class="v" id="t-leads">—</div><div class="m" id="t-leads-m">contact form → Slack</div></div>
+    <div class="tile"><div class="k">Quotes · 7d</div><div class="v" id="t-quotes">—</div><div class="m">draft orders built</div></div>
+    <div class="tile"><div class="k">POs · 7d</div><div class="v" id="t-pos">—</div><div class="m">supplier drafts</div></div>
+    <div class="tile" id="tile-needs"><div class="k">Needs Input</div><div class="v" id="t-needs">—</div><div class="m">answer in Slack</div></div>
+    <div class="tile"><div class="k">Events · 24h</div><div class="v" id="t-events">—</div><div class="m">hub activity</div></div>
+    <div class="tile"><div class="k">Vault</div><div class="v" id="t-vault">—</div><div class="m">linked notes</div></div>
+  </div>
+
+  <div class="main">
+    <div class="panel">
+      <div class="hd">Org · Maddox &amp; Staff</div>
+      <div class="org" id="org"></div>
+    </div>
+    <div class="panel" id="g3d"><div class="hint">drag to spin · scroll to zoom · click a node to open the note</div></div>
+  </div>
+
+  <div class="offices" id="offices"></div>
+
+  <footer>
+    <span>Private. Runs on the Pitstop Hub.</span>
+    <a href="https://github.com/thehuntersamuel/pitstop-pro-brain" target="_blank" rel="noopener">repo: pitstop-pro-brain →</a>
+  </footer>
+</div>
+
+<script src="https://unpkg.com/3d-force-graph@1.73.4/dist/3d-force-graph.min.js"></script>
+<script src="https://unpkg.com/three-spritetext@1.8.2/dist/three-spritetext.min.js"></script>
+<script>
+const REPO = "https://github.com/thehuntersamuel/pitstop-pro-brain/blob/main/";
+const HQ_FN = "https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq";
+const TOKEN = new URLSearchParams(location.search).get("t") || "";
+
+const OFFICES = [
+  {dir:"00-HQ", num:"00", name:"HQ", emp:"Maddox", color:"#E8C468", role:"Chief of staff. House rules, architecture, the whole map."},
+  {dir:"10-Duke-PO-Desk", num:"10", name:"PO Desk", emp:"Duke", color:"#5B9BD5", role:"Purchase orders, warehouses, supplier mail."},
+  {dir:"20-Piper-Quote-Desk", num:"20", name:"Quote Desk", emp:"Piper", color:"#70AD8E", role:"Quotes, draft orders, close rate."},
+  {dir:"30-Scout-Lead-Watch", num:"30", name:"Lead Watch", emp:"Scout", color:"#C9756B", role:"Contact forms → Slack pings."},
+  {dir:"40-Ledger-Books", num:"40", name:"Books", emp:"Ledger", color:"#8E7CC3", role:"Net profit, COGS rules, tracker, GCLID."},
+  {dir:"50-Click-Ads", num:"50", name:"Ads", emp:"Click", color:"#D5A45B", role:"Google Ads, PMax, the freeze list."},
+  {dir:"60-Merch-Feeds", num:"60", name:"Feeds", emp:"Merch", color:"#5BB8C4", role:"Merchant Center, Simprosys, listings."},
+  {dir:"70-Scribe-SEO", num:"70", name:"SEO & Content", emp:"Scribe", color:"#B57BA6", role:"Rankings, backlinks, content."},
+  {dir:"80-Keeper-CRM", num:"80", name:"CRM & Retention", emp:"Keeper", color:"#7FA35C", role:"GoHighLevel cards, follow-up, Klaviyo."},
+  {dir:"90-RnD", num:"90", name:"R&D", emp:"RnD", color:"#9AA0A6", role:"Experiments. Voice, new tools, next builds."},
+];
+
+const BRAIN_FN = "https://mojjazwjwksypjtljusz.supabase.co/functions/v1/brain";
+let GRAPH = {nodes:[], links:[]};
+
+/* ---------- live tiles ---------- */
+async function stats(){
+  const dot=document.getElementById("hubdot"), txt=document.getElementById("hubtxt");
+  if(!TOKEN){ dot.className="dot off"; txt.textContent="no key in link"; return; }
+  try{
+    const r = await fetch(`${HQ_FN}?t=${encodeURIComponent(TOKEN)}&op=stats`);
+    if(!r.ok) throw 0;
+    const s = await r.json();
+    set("t-leads", s.leads_today); set("t-quotes", s.quotes_7d);
+    set("t-pos", s.pos_7d); set("t-needs", s.needs_input);
+    set("t-events", s.events_24h);
+    document.getElementById("tile-needs").classList.toggle("warn", s.needs_input>0);
+    if(s.last_lead) document.getElementById("t-leads-m").textContent = "last: "+s.last_lead;
+    dot.className="dot on"; txt.textContent="hub live · "+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+  }catch(e){ dot.className="dot off"; txt.textContent="hub unreachable"; }
+}
+function set(id,v){ document.getElementById(id).textContent = (v===0||v)? v : "—"; }
+stats(); setInterval(stats, 60000);
+
+/* ---------- boot: pull the live graph from the hub ---------- */
+async function boot(){
+  try{
+    const r = await fetch(`${BRAIN_FN}?t=${encodeURIComponent(TOKEN)}&op=graph`);
+    if(!r.ok) throw 0;
+    GRAPH = await r.json();
+  }catch(e){
+    document.getElementById("g3d").insertAdjacentHTML("beforeend",
+      '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#6B7480;font-size:13px">open this page through your HQ link to load the brain graph</div>');
+  }
+  document.getElementById("t-vault").textContent = GRAPH.nodes.length || "—";
+  buildOrg(); buildOffices(); if(GRAPH.nodes.length) buildGraph();
+}
+
+/* ---------- org panel ---------- */
+function buildOrg(){
+const org = document.getElementById("org");
+OFFICES.forEach((o,i)=>{
+  const d = document.createElement("div");
+  d.className = "emp"+(o.emp==="Maddox"?" boss":"");
+  const ct = GRAPH.nodes.filter(n=>n.office===o.dir && n.kind==="note").length;
+  d.innerHTML = `<span class="chip" style="background:${o.color}"></span>
+    <span class="nm">${o.emp}</span><span class="role">${o.role}</span>
+    <span class="ct">${ct||""}</span>`;
+  d.onclick = ()=>focusOffice(o, d);
+  org.appendChild(d);
+});
+}
+
+/* ---------- office index ---------- */
+function buildOffices(){
+const offEl = document.getElementById("offices");
+OFFICES.forEach(o=>{
+  const notes = GRAPH.nodes.filter(n=>n.office===o.dir);
+  const div = document.createElement("div");
+  div.className = "panel office"; div.id = "off-"+o.num;
+  div.innerHTML = `<div class="hd"><span class="chip" style="background:${o.color}"></span>
+      ${o.num} · ${o.emp} — ${o.name}<span class="tag">${notes.length} notes</span></div>
+    <ul>${notes.map(n=>`<li><a href="${REPO}${n.path}" target="_blank" rel="noopener">
+      <span class="fn">${n.id.replace(/_/g," ")}</span></a></li>`).join("")}</ul>`;
+  offEl.appendChild(div);
+});
+}
+
+/* ---------- 3D graph ---------- */
+let G = null;
+function buildGraph(){
+const el = document.getElementById("g3d");
+G = ForceGraph3D()(el)
+  .width(el.clientWidth).height(el.clientHeight)
+  .backgroundColor("#0E1014")
+  .graphData(GRAPH)
+  .nodeVal(n=>n.val)
+  .nodeColor(n=>n.color)
+  .nodeOpacity(0.92)
+  .nodeLabel(n=>`<div style="font:12px Inter,sans-serif;background:#1B2029;color:#E9ECF1;
+      padding:6px 9px;border-radius:6px;border:1px solid #242B36">
+      <b>${n.id.replace(/_/g," ")}</b><br><span style="color:#A8B0BC">${n.officeName}</span></div>`)
+  .nodeThreeObjectExtend(true)
+  .nodeThreeObject(n=>{
+    if(n.kind!=="employee") return false;
+    const t = new SpriteText(n.id, n.id==="Maddox"?7:5.5, "#E9ECF1");
+    t.fontWeight = "700"; t.backgroundColor = "rgba(14,16,20,.55)";
+    t.padding = 2; t.borderRadius = 3; t.position.y = -(n.val+7);
+    return t;
+  })
+  .linkColor(l=>l.kind==="org" ? "#3A4453" : "#2A3340")
+  .linkOpacity(0.55)
+  .linkWidth(l=>l.kind==="org"?1.1:0.5)
+  .onNodeClick(n=>{ if(n.path) window.open(REPO+n.path, "_blank"); })
+  .showNavInfo(false);
+G.cameraPosition({x:0,y:0,z:340});
+G.d3Force("charge").strength(-70);
+
+setInterval(()=>{ if(!spin || !G) return; ang += 0.0016;
+  G.cameraPosition({x:340*Math.sin(ang), y:40, z:340*Math.cos(ang)}); }, 30);
+el.addEventListener("pointerdown", ()=>spin=false);
+}
+let spin = true, ang = 0;
+
+function focusOffice(o, row){
+  document.querySelectorAll(".emp").forEach(e=>e.classList.remove("active"));
+  row.classList.add("active");
+  const node = GRAPH.nodes.find(n=>n.id===o.emp);
+  if(G && node && node.x!==undefined){
+    spin=false;
+    const d = 110, r = Math.hypot(node.x,node.y,node.z)||1;
+    G.cameraPosition({x:node.x*(1+d/r), y:node.y*(1+d/r), z:node.z*(1+d/r)}, node, 900);
+  }
+  const sec = document.getElementById("off-"+o.num);
+  if(sec) sec.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+window.addEventListener("resize", ()=>{ const el=document.getElementById("g3d"); if(G) G.width(el.clientWidth).height(el.clientHeight); });
+boot();
+</script>
+</body>
+</html>
