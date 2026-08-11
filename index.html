@@ -1646,7 +1646,7 @@ async function speak(text, btn, who){
     const r = await fetch(SPEAK_FN + "?t=" + encodeURIComponent(TOKEN), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ text, who: who || "Maddox" })
     });
     if (!r.ok){
       let why = "Audio is not set up yet.";
@@ -1683,7 +1683,7 @@ function deskBriefText(n, deskRows, summary){
   const o = byDir[n.office] || {emp:"This desk", role:""};
   const get = k => { const r = deskRows.find(x=>x[0] === k); return r ? tidy(r[1]) : ""; };
   const bits = [];
-  bits.push(o.emp + ", " + titleCase(n.id) + ".");
+  bits.push(o.emp + " here. " + titleCase(n.id) + ".");
   if (deskRows.length){
     const state = get("state"), last = get("last"), watch = get("watch"),
           issue = get("issue"), rec = get("rec");
@@ -1759,8 +1759,8 @@ function runCommand(raw){
                     && META[n.id][0] === "LIVE");
       const pick = live[0] || GRAPH.nodes.find(n=>n.office === emp.dir && n.kind === "note");
       if (pick){ speakDesk(pick, document.getElementById("vbrief")); return; }
-      speak(emp.emp + " runs " + emp.role.replace(/\./g, " ").toLowerCase()
-            + ". Nothing logged on that desk yet.", document.getElementById("vbrief"));
+      speak(emp.emp + " here. I run " + emp.role.replace(/\./g, " ").toLowerCase()
+            + ". Nothing logged on my desk yet.", document.getElementById("vbrief"), emp.emp);
       return;
     }
   }
@@ -1793,7 +1793,8 @@ async function speakDesk(n, btn){
   const c = await noteContent(n.path);
   const ds = c ? parseDesk(c) : {rows:[]};
   const meta = META[n.id] || [];
-  speak(deskBriefText(n, ds.rows, meta[1]), btn);
+  const o = byDir[n.office];
+  speak(deskBriefText(n, ds.rows, meta[1]), btn, o ? o.emp : "Maddox");
 }
 
 document.getElementById("vbrief").onclick = ()=> speak(dailyBriefText(), document.getElementById("vbrief"));
