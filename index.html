@@ -183,6 +183,19 @@
   .av-x:hover{color:var(--ink);border-color:var(--acc)}
   #artview iframe{flex:1;border:0;width:100%;background:#0d0d0d}
 
+  .vbtn{background:var(--panel);border:1px solid var(--line);color:var(--ink2);
+    font:600 9.5px ui-monospace,Consolas,monospace;letter-spacing:.15em;padding:7px 12px;
+    cursor:pointer;text-transform:uppercase;
+    clip-path:polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px)}
+  .vbtn:hover{color:var(--ink);border-color:var(--acc)}
+  .vbtn:disabled{opacity:.4;cursor:default}
+  .vbtn.live{color:#0E1115;background:var(--acc);border-color:var(--acc)}
+  .vbtn.hot{color:#E8C468;border-color:#E8C468}
+  #voicebar{display:flex;align-items:center;gap:8px;margin-left:18px}
+  #vheard{font:400 9.5px ui-monospace,Consolas,monospace;letter-spacing:.1em;
+    color:var(--ink3);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #d-say{margin:0 0 18px}
+
   #composer{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:12;
     display:none;align-items:center;gap:8px;width:min(600px,92vw)}
   #composer.on{display:flex}
@@ -280,6 +293,11 @@
   <span class="wm">PITSTOP <b>BRAIN</b></span>
   <span class="sysline">OPS.GRID // 10 BRANCHES</span>
   <span class="status"><span class="dot"></span><span>HUB.LIVE</span></span>
+  <span id="voicebar">
+    <span id="vheard"></span>
+    <button class="vbtn" id="vask" title="Ask out loud">&#9679; ASK</button>
+    <button class="vbtn" id="vbrief" title="Read me the day">&#9654; BRIEF ME</button>
+  </span>
 </header>
 
 <div id="stage"><svg id="scene" viewBox="0 0 1200 820" preserveAspectRatio="xMidYMid meet">
@@ -325,6 +343,7 @@
   <div id="d-title"></div>
   <span class="chip-status" id="d-status"></span>
   <div id="d-sum"></div>
+  <button class="vbtn" id="d-say">&#9654; BRIEF ME ON THIS</button>
   <div id="d-body"><div class="lbl">Desk View</div><div id="d-body-t" class="mdoc"></div></div>
 </div></div>
 
@@ -1542,10 +1561,14 @@ function openDrawer(n){
     wireWikilinks(bt);
     document.getElementById("pbox").scrollTop = 0;
   });
+  const say = document.getElementById("d-say");
+  say.style.display = "";
+  say.onclick = ()=> speakDesk(n, say);
   document.getElementById("drawer").classList.add("open");
   document.body.classList.add("drawer-open");
 }
-function closeDrawer(){ document.getElementById("drawer").classList.remove("open");
+function closeDrawer(){ stopSpeaking();
+  document.getElementById("drawer").classList.remove("open");
   document.body.classList.remove("drawer-open"); }
 document.getElementById("dclose").onclick = closeDrawer;
 document.getElementById("drawer").addEventListener("click", e=>{ if (e.target.id === "drawer") closeDrawer(); });
@@ -1585,6 +1608,194 @@ function closeArtifact(){ document.getElementById("artview").classList.remove("o
   document.getElementById("av-f").srcdoc = ""; }
 document.getElementById("av-x").onclick = closeArtifact;
 
+// ---------------- voice: Maddox out loud ----------------
+const SPEAK_FN = "https://mojjazwjwksypjtljusz.supabase.co/functions/v1/speak";
+let AUDIO = null, SPEAKING = false;
+
+function vsetBtn(btn, live){
+  if (!btn) return;
+  btn.classList.toggle("live", !!live);
+}
+function stopSpeaking(){
+  if (AUDIO){ AUDIO.pause(); AUDIO.src = ""; AUDIO = null; }
+  SPEAKING = false;
+  if (window.setSpeaking) window.setSpeaking(false);
+  document.querySelectorAll(".vbtn.live").forEach(b=>b.classList.remove("live"));
+  const vb = document.getElementById("vbrief"); if (vb) vb.innerHTML = "&#9654; BRIEF ME";
+  const db = document.getElementById("d-say"); if (db) db.innerHTML = "&#9654; BRIEF ME ON THIS";
+}
+function vsay(msg){
+  const box = document.getElementById("msgok");
+  if (!box) return;
+  box.textContent = msg;
+  box.classList.add("on");
+  setTimeout(()=>box.classList.remove("on"), 4200);
+}
+
+async function speak(text, btn){
+  if (!text) return;
+  if (SPEAKING){ stopSpeaking(); return; }
+  if (!TOKEN){ vsay("No key on this link, so audio is off."); return; }
+  SPEAKING = true;
+  vsetBtn(btn, true);
+  if (btn) btn.innerHTML = "&#9632; STOP";
+  try{
+    const r = await fetch(SPEAK_FN + "?t=" + encodeURIComponent(TOKEN), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+    if (!r.ok){
+      let why = "Audio is not set up yet.";
+      try{ const j = await r.json();
+        if (j.error === "not configured") why = "Add the ElevenLabs key in Supabase and this works.";
+        else if (j.error === "elevenlabs") why = "ElevenLabs said no (" + j.status + ").";
+      }catch(e){}
+      stopSpeaking(); vsay(why); return;
+    }
+    const blob = await r.blob();
+    if (!SPEAKING) return;
+    AUDIO = new Audio(URL.createObjectURL(blob));
+    AUDIO.onplay = ()=>{ if (window.setSpeaking) window.setSpeaking(true); };
+    AUDIO.onended = stopSpeaking;
+    AUDIO.onerror = ()=>{ stopSpeaking(); vsay("That audio would not play."); };
+    await AUDIO.play();
+  }catch(e){
+    stopSpeaking(); vsay("Could not reach the voice service.");
+  }
+}
+
+// ---- what she actually says ----
+function tidy(s){
+  return String(s || "")
+    .replace(/\[\[([^\]|]+)(\|[^\]]+)?\]\]/g, "$1")
+    .replace(/[*_`#>~]/g, "")
+    .replace(/\/mo\b/gi, " a month")
+    .replace(/\bvs\b/gi, "versus")
+    .replace(/(^|\s)\+(\$?\d)/g, "$1$2")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function deskBriefText(n, deskRows, summary){
+  const o = byDir[n.office] || {emp:"This desk", role:""};
+  const get = k => { const r = deskRows.find(x=>x[0] === k); return r ? tidy(r[1]) : ""; };
+  const bits = [];
+  bits.push(o.emp + ", " + titleCase(n.id) + ".");
+  if (deskRows.length){
+    const state = get("state"), last = get("last"), watch = get("watch"),
+          issue = get("issue"), rec = get("rec");
+    if (rec && !/^none/i.test(rec)) bits.push("Recommendation. " + rec + ".");
+    if (issue && !/^none/i.test(issue)) bits.push("Ran into an issue. " + issue + ".");
+    else bits.push("No issues.");
+    if (last) bits.push("Last run. " + last + ".");
+    if (state) bits.push("Current state. " + state + ".");
+    if (watch) bits.push("Keep an eye on. " + watch + ".");
+    if ((!rec || /^none/i.test(rec)) && (!issue || /^none/i.test(issue)))
+      bits.push("Nothing needs you on this one.");
+  } else if (summary){
+    bits.push(tidy(summary));
+  } else {
+    bits.push("No desk status logged on this one yet.");
+  }
+  return bits.join(" ");
+}
+function dailyBriefText(){
+  const v = {};
+  VITALS.forEach(x=>{ v[x.k] = x; });
+  const rowOf = (card, label) => {
+    const c = card || {}; const r = (c.rows || []).find(x=>x[0] === label);
+    return r ? r[1] : "";
+  };
+  const profit = VITALS[0] || {}, close = VITALS[1] || {}, po = VITALS[2] || {};
+  const gap = rowOf(TARGET_CARD, "GAP"), lever = rowOf(TARGET_CARD, "THE LEVER"),
+        table = rowOf(TARGET_CARD, "ON THE TABLE"), needs = rowOf(SYS_CARD, "NEEDS.INPUT");
+  const files = (typeof BRAINN === "string" ? BRAINN : "").toLowerCase().replace(/\s*files?$/, "");
+  const out = [];
+  out.push("Here is where you stand.");
+  if (profit.v) out.push("Net profit for July, " + profit.v + ". " + tidy(profit.m));
+  if (gap) out.push("You are " + gap + " off the twenty thousand a month target.");
+  if (lever) out.push("The lever is the " + lever.toLowerCase() + ".");
+  if (close.v) out.push("Close rate is " + close.v + ". " + tidy(close.m));
+  if (table) out.push("That is " + tidy(table) + " on the table.");
+  if (po.v) out.push(po.v + " purchase orders drafted this week. " + tidy(po.m));
+  out.push(needs && needs !== "0"
+    ? needs + " item" + (needs === "1" ? "" : "s") + " needs your input."
+    : "Nothing is waiting on you right now.");
+  if (files) out.push("The brain is holding " + files + " files.");
+  return out.join(" ");
+}
+
+// ---- voice commands ----
+let RECOG = null, LISTENING = false;
+function heard(t){ const e = document.getElementById("vheard"); if (e) e.textContent = t || ""; }
+
+function runCommand(raw){
+  const t = String(raw || "").toLowerCase().trim();
+  heard('"' + raw + '"');
+  if (!t) return;
+  if (/\b(stop|quiet|shut up|never mind)\b/.test(t)){ stopSpeaking(); return; }
+  if (/\b(brief|briefing|rundown|how are we|how is the business|the day|catch me up|where do we stand)\b/.test(t)){
+    speak(dailyBriefText(), document.getElementById("vbrief")); return;
+  }
+  if (/\b(needs? (my )?input|waiting on me|what.s waiting|anything for me)\b/.test(t)){
+    const needs = (SYS_CARD.rows.find(r=>r[0] === "NEEDS.INPUT") || [])[1] || "0";
+    speak(needs && needs !== "0"
+      ? needs + " item is waiting on you. Open the desk with the red line on it."
+      : "Nothing is waiting on you right now.", document.getElementById("vbrief"));
+    return;
+  }
+  const emp = OFFICES.find(o=>{
+    const n = o.emp.toLowerCase();
+    return t.includes(n) || (n === "rnd" && /\br ?(and|n) ?d\b/.test(t));
+  });
+  if (emp){
+    const node = GRAPH.nodes.find(n=>n.id === emp.emp);
+    if (node){
+      layoutFocus(emp.emp);
+      const live = GRAPH.nodes.filter(n=>n.office === emp.dir && n.kind === "note" && META[n.id]
+                    && META[n.id][0] === "LIVE");
+      const pick = live[0] || GRAPH.nodes.find(n=>n.office === emp.dir && n.kind === "note");
+      if (pick){ speakDesk(pick, document.getElementById("vbrief")); return; }
+      speak(emp.emp + " runs " + emp.role.replace(/\./g, " ").toLowerCase()
+            + ". Nothing logged on that desk yet.", document.getElementById("vbrief"));
+      return;
+    }
+  }
+  speak("I did not catch that. Try, brief me, or name a desk like Duke or Click.",
+        document.getElementById("vbrief"));
+}
+
+function startListening(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById("vask");
+  if (!SR){ vsay("This browser will not do voice input. Chrome will."); return; }
+  if (LISTENING){ try{ RECOG.stop(); }catch(e){} return; }
+  stopSpeaking();
+  RECOG = new SR();
+  RECOG.lang = "en-US";
+  RECOG.interimResults = false;
+  RECOG.maxAlternatives = 1;
+  RECOG.onstart = ()=>{ LISTENING = true; btn.classList.add("hot"); heard("listening…"); };
+  RECOG.onerror = e=>{
+    LISTENING = false; btn.classList.remove("hot");
+    heard(e.error === "not-allowed" ? "mic blocked" : "");
+    if (e.error === "not-allowed") vsay("Chrome blocked the mic. Allow it in the address bar.");
+  };
+  RECOG.onend = ()=>{ LISTENING = false; btn.classList.remove("hot"); };
+  RECOG.onresult = ev=>{ runCommand(ev.results[0][0].transcript); };
+  try{ RECOG.start(); }catch(e){ vsay("Mic is already running."); }
+}
+
+async function speakDesk(n, btn){
+  const c = await noteContent(n.path);
+  const ds = c ? parseDesk(c) : {rows:[]};
+  const meta = META[n.id] || [];
+  speak(deskBriefText(n, ds.rows, meta[1]), btn);
+}
+
+document.getElementById("vbrief").onclick = ()=> speak(dailyBriefText(), document.getElementById("vbrief"));
+document.getElementById("vask").onclick = startListening;
+
 function onClick(id, kind){
   if (kind === "note"){ if (ART[id]){ openArtifact(id); return; } const n = nodeById(id); if (n) openDrawer(n); return; }
   if (mode === "focus" && id === "Maddox" && focusEmp !== "Maddox"){ layoutHome(); return; }
@@ -1594,6 +1805,7 @@ function onClick(id, kind){
 document.getElementById("backlink").onclick = layoutHome;
 svg.addEventListener("click", ()=>{ if (mode === "focus") layoutHome(); });
 document.addEventListener("keydown", e=>{ if (e.key === "Escape"){
+  if (SPEAKING){ stopSpeaking(); return; }
   const av = document.getElementById("artview");
   if (av.classList.contains("on")){ closeArtifact(); return; }
   closeDrawer(); if (mode==="focus") layoutHome(); } });
