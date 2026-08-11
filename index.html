@@ -169,6 +169,20 @@
   details.fullnote summary:hover{color:var(--ink)}
   details.fullnote .mdoc{padding-top:8px}
 
+  #artview{position:fixed;inset:0;z-index:40;display:none;flex-direction:column;background:var(--bg)}
+  #artview.on{display:flex}
+  .av-bar{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line);
+    background:rgba(14,17,21,.97)}
+  .av-edge{width:3px;height:22px;background:var(--artC,var(--acc))}
+  .av-t{font-family:'Oswald',sans-serif;font-style:italic;font-weight:600;font-size:15px;
+    letter-spacing:.1em;text-transform:uppercase}
+  .av-s{font:400 9px ui-monospace,Consolas,monospace;letter-spacing:.18em;color:var(--ink3);text-transform:uppercase}
+  .av-x{margin-left:auto;background:var(--panel);border:1px solid var(--line);color:var(--ink2);
+    font:600 10px ui-monospace,Consolas,monospace;letter-spacing:.14em;padding:8px 14px;cursor:pointer;
+    clip-path:polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)}
+  .av-x:hover{color:var(--ink);border-color:var(--acc)}
+  #artview iframe{flex:1;border:0;width:100%;background:#0d0d0d}
+
   #composer{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:12;
     display:none;align-items:center;gap:8px;width:min(600px,92vw)}
   #composer.on{display:flex}
@@ -319,6 +333,11 @@
   <button id="msgbtn">SEND</button>
 </div>
 <div id="msgok"></div>
+
+<div id="artview"><div class="av-bar"><span class="av-edge"></span>
+  <span class="av-t" id="av-t"></span><span class="av-s" id="av-s"></span>
+  <button class="av-x" id="av-x">CLOSE</button></div>
+  <iframe id="av-f" sandbox="allow-scripts"></iframe></div>
 
 <script>
 const REPO = "https://github.com/thehuntersamuel/pitstop-pro-brain/blob/main/";
@@ -1278,14 +1297,18 @@ function layoutFocus(emp){
     const a = -Math.PI/2 + i*(2*Math.PI/Math.max(notes.length,3));
     const x = CX + Math.cos(a)*R, y = CY + Math.sin(a)*R*0.78;
     spoke(CX, CY, x, y, .6);
-    const tl = twoLines(titleCase(n.id));
+    const tl = twoLines(ART[n.id] ? ART[n.id].title : titleCase(n.id));
     place(n.id, x, y, {r:24, lines:tl, ns:11.5, noteLabel:true, hideDot:false, oc:OFFICE_COLOR[o.dir]});
     const p = nodeEls[n.id];
-    const st = (META[n.id]||[])[0];
+    const st = ART[n.id] ? "DASH" : (META[n.id]||[])[0];
     if (st === "LIVE"){
       p.role.textContent = "● LIVE";
       p.role.setAttribute("y", -32);
       p.role.setAttribute("fill", "var(--ok)");
+    } else if (st === "DASH"){
+      p.role.textContent = "▦ DASH";
+      p.role.setAttribute("y", -32);
+      p.role.setAttribute("fill", OFFICE_COLOR[o.dir]);
     } else p.role.textContent = "";
   });
   OFFICES.filter(q=>q.emp!==emp && q.emp!=="Maddox").forEach((q,i,arr)=>{
@@ -1527,15 +1550,53 @@ function closeDrawer(){ document.getElementById("drawer").classList.remove("open
 document.getElementById("dclose").onclick = closeDrawer;
 document.getElementById("drawer").addEventListener("click", e=>{ if (e.target.id === "drawer") closeDrawer(); });
 
+const ART = {
+  dash_ads_reality_check: {path:"50-Click-Ads/dash_ads_reality_check.html", office:"50-Click-Ads",
+    title:"Ads Reality Check", sub:"CLICK // SNAPSHOT DASH"},
+  dash_google_ads_weekly: {path:"50-Click-Ads/dash_google_ads_weekly.html", office:"50-Click-Ads",
+    title:"Ads Weekly Overview", sub:"CLICK // SNAPSHOT DASH"},
+  dash_ytd_weekly_sales: {path:"40-Ledger-Books/dash_ytd_weekly_sales.html", office:"40-Ledger-Books",
+    title:"YTD Weekly Sales", sub:"LEDGER // SNAPSHOT DASH"},
+};
+Object.keys(ART).forEach(id=>{
+  GRAPH.nodes.push({id, path:ART[id].path, office:ART[id].office, kind:"note", val:5});
+});
+const ART_CACHE = {};
+async function openArtifact(id){
+  const a = ART[id];
+  const av = document.getElementById("artview");
+  av.style.setProperty("--artC", OFFICE_COLOR[a.office]);
+  document.getElementById("av-t").textContent = a.title;
+  document.getElementById("av-s").textContent = a.sub;
+  av.classList.add("on");
+  const f = document.getElementById("av-f");
+  if (ART_CACHE[id]){ f.srcdoc = ART_CACHE[id]; return; }
+  f.srcdoc = '<body style="background:#0d0d0d;color:#59626C;font-family:monospace;padding:40px">loading the dashboard…</body>';
+  try{
+    const r = await fetch(`${BRAIN_FN}?t=${encodeURIComponent(TOKEN)}&op=file&path=${encodeURIComponent(a.path)}`);
+    if (!r.ok) throw 0;
+    const html = await r.text();
+    ART_CACHE[id] = html; f.srcdoc = html;
+  }catch(e){
+    f.srcdoc = '<body style="background:#0d0d0d;color:#8a2e2e;font-family:monospace;padding:40px">could not load the dashboard right now</body>';
+  }
+}
+function closeArtifact(){ document.getElementById("artview").classList.remove("on");
+  document.getElementById("av-f").srcdoc = ""; }
+document.getElementById("av-x").onclick = closeArtifact;
+
 function onClick(id, kind){
-  if (kind === "note"){ const n = nodeById(id); if (n) openDrawer(n); return; }
+  if (kind === "note"){ if (ART[id]){ openArtifact(id); return; } const n = nodeById(id); if (n) openDrawer(n); return; }
   if (mode === "focus" && id === "Maddox" && focusEmp !== "Maddox"){ layoutHome(); return; }
   if (mode === "focus" && id === focusEmp){ layoutHome(); return; }
   layoutFocus(id);
 }
 document.getElementById("backlink").onclick = layoutHome;
 svg.addEventListener("click", ()=>{ if (mode === "focus") layoutHome(); });
-document.addEventListener("keydown", e=>{ if (e.key === "Escape"){ closeDrawer(); if (mode==="focus") layoutHome(); } });
+document.addEventListener("keydown", e=>{ if (e.key === "Escape"){
+  const av = document.getElementById("artview");
+  if (av.classList.contains("on")){ closeArtifact(); return; }
+  closeDrawer(); if (mode==="focus") layoutHome(); } });
 document.getElementById("xbtn").onclick = e=>{ e.stopPropagation();
   showX = !showX; if (mode === "focus") layoutFocus(focusEmp); };
 
