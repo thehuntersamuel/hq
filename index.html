@@ -1169,8 +1169,9 @@ function weaveWave(th, t, c, seed, ph){
        + .18*Math.sin(c.f[2]*th + t*c.sp[2] + ph);
 }
 function updateWeave(m, t){
-  const boost = 1 + (SPEAK_AMP - 1) * .55;
-  const tt = t * (SPEAK_AMP > 1 ? 1.9 : 1);
+  const amp = (SPEAK_WHO && m.wid === SPEAK_WHO) ? 2.3 : 1;
+  const boost = 1 + (amp - 1) * .55;
+  const tt = t * (amp > 1 ? 1.9 : 1);
   m.ribbons.forEach(rb=>{
     const n = rb.paths.length;
     for (let j = 0; j < n; j++){
@@ -1188,9 +1189,9 @@ function updateWeave(m, t){
   if (m.glow) m.glow.setAttribute("r", m.R * 1.05);
   if (m.click) m.click.setAttribute("r", m.R);
 }
-let SPEAK_AMP = 1;
-window.setSpeaking = on => {
-  SPEAK_AMP = on ? 2.3 : 1;
+let SPEAK_WHO = null;
+window.setSpeaking = (on, who) => {
+  SPEAK_WHO = on ? (who || "Maddox") : null;
   document.getElementById("scene").classList.toggle("speaking", !!on);
 };
 
@@ -1200,6 +1201,7 @@ function makeNode(id, kind){
   const parts = {g, kind};
   if (kind === "center"){
     parts.weave = makeWeave(g, 58, "#00A1CF");
+    parts.weave.wid = "Maddox";
     ORBS["Maddox"] = parts.weave;
   }
   parts.body = kind === "center" ? parts.core : el("circle", {class:"body", cx:0, cy:0}, g);
@@ -1207,6 +1209,7 @@ function makeNode(id, kind){
     parts.body.style.display = "none";
     const o = byEmp[id];
     parts.weave = makeWeave(g, 35, OFFICE_COLOR[o.dir], true);
+    parts.weave.wid = id;
     ORBS[id] = parts.weave;
   } else if (kind !== "center"){
     parts.arc = el("circle", {class:"oarc", fill:"none", "stroke-width":2.5,
@@ -1632,7 +1635,7 @@ function vsay(msg){
   setTimeout(()=>box.classList.remove("on"), 4200);
 }
 
-async function speak(text, btn){
+async function speak(text, btn, who){
   if (!text) return;
   if (SPEAKING){ stopSpeaking(); return; }
   if (!TOKEN){ vsay("No key on this link, so audio is off."); return; }
@@ -1656,7 +1659,7 @@ async function speak(text, btn){
     const blob = await r.blob();
     if (!SPEAKING) return;
     AUDIO = new Audio(URL.createObjectURL(blob));
-    AUDIO.onplay = ()=>{ if (window.setSpeaking) window.setSpeaking(true); };
+    AUDIO.onplay = ()=>{ if (window.setSpeaking) window.setSpeaking(true, who); };
     AUDIO.onended = stopSpeaking;
     AUDIO.onerror = ()=>{ stopSpeaking(); vsay("That audio would not play."); };
     await AUDIO.play();
