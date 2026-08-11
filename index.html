@@ -20,9 +20,9 @@
 
   header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;
     gap:14px;padding:16px 22px;pointer-events:none}
-  header img{height:38px;pointer-events:auto}
   header .wm{font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;
-    letter-spacing:.24em;color:var(--blue2)}
+    letter-spacing:.24em;color:var(--ink)}
+  header .wm b{color:var(--blue2);font-weight:600}
   .status{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:11px;
     color:var(--ink3);pointer-events:auto}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--ink3)}
@@ -65,8 +65,7 @@
 </head>
 <body>
 <header>
-  <img src="https://pitstop-pro.com/cdn/shop/files/PitStopPro-Logo_130x68.png" alt="Pitstop Pro">
-  <span class="wm">BRAIN</span>
+  <span class="wm">PITSTOP <b>BRAIN</b></span>
   <span class="status"><span class="dot" id="hubdot"></span><span id="hubtxt"></span></span>
 </header>
 
