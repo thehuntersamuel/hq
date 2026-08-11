@@ -133,17 +133,6 @@
   #msgok{position:fixed;left:50%;transform:translateX(-50%);bottom:66px;z-index:12;text-align:center;
     font:10px ui-monospace,Consolas,monospace;letter-spacing:.18em;color:var(--ok);opacity:0;
     transition:opacity .4s;pointer-events:none}
-  @media(max-width:760px){
-    #drawer{padding:10px}
-    .panel-box{padding:24px 20px 30px;max-height:94dvh}
-    #composer{bottom:10px;width:calc(100vw - 16px)}
-    #composer input{font-size:16px;padding:11px 12px}
-    #msgok{bottom:62px}
-    .ctl{bottom:60px}
-    .crumb{bottom:60px}
-    header{padding:12px 14px}
-    .sysline{display:none}
-  }
   #d-office{font-family:ui-monospace,Consolas,monospace;font-size:9.5px;letter-spacing:.2em;
     text-transform:uppercase;color:var(--ink3);margin-bottom:14px}
   #d-title{font-family:'Oswald',sans-serif;font-style:italic;font-size:27px;font-weight:600;
@@ -193,7 +182,28 @@
   .sdots i{width:10px;height:2px;background:var(--steel2)}
   .sdots i.on{background:var(--acc)}
   body.drawer-open .side.right{opacity:0;pointer-events:none}
-  @media(max-width:1180px){.side{display:none}}
+  @media(min-width:761px) and (max-width:1180px) and (min-height:481px){.side{display:none}}
+
+  @media(max-width:760px),(max-height:480px){
+    html,body{overflow-y:auto;overflow-x:hidden;height:auto}
+    body{min-height:100dvh;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+    header{padding:12px 14px;background:linear-gradient(#0A0B0D 62%,rgba(10,11,13,0))}
+    .sysline{display:none}
+    #stage{position:relative;inset:auto;height:58vh;min-height:340px;margin-top:44px}
+    .hint{position:static;margin:0 0 6px;height:14px}
+    .side{position:static;transform:none;width:auto;display:block;padding:0 12px}
+    .side.left{margin-top:2px}
+    .side.right{margin-top:16px;margin-bottom:8px}
+    .scard{min-height:0}
+    body.drawer-open .side.right{opacity:1;pointer-events:auto}
+    .crumb{display:none}
+    .ctl{position:fixed;bottom:calc(64px + env(safe-area-inset-bottom,0px));right:10px}
+    #composer{bottom:calc(10px + env(safe-area-inset-bottom,0px));width:calc(100vw - 16px)}
+    #composer input{font-size:16px;padding:11px 12px}
+    #msgok{bottom:calc(62px + env(safe-area-inset-bottom,0px))}
+    #drawer{padding:10px}
+    .panel-box{padding:24px 20px 30px;max-height:94dvh}
+  }
 
 </style>
 </head>
@@ -1589,10 +1599,12 @@ document.getElementById("msgin").addEventListener("keydown", e=>{
   e.stopPropagation();
 });
 function fitScene(){
-  const portrait = innerWidth / innerHeight < .92;
+  const r = document.getElementById("stage").getBoundingClientRect();
+  const portrait = (r.width || innerWidth) / (r.height || innerHeight) < .92;
   svg.setAttribute("viewBox", portrait ? "150 -20 900 880" : "0 0 1200 820");
 }
 fitScene(); addEventListener("resize", fitScene);
+setTimeout(fitScene, 60);
 setInterval(()=>{ panelState.L.i++; renderCard("L"); }, 6200);
 setInterval(()=>{ panelState.R.i++; renderCard("R"); }, 7400);
 
