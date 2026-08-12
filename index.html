@@ -1593,8 +1593,8 @@ const ART = {
     title:"Ads Reality Check", sub:"ROME // SNAPSHOT DASH"},
   dash_google_ads_weekly: {path:"50-Rome-Ads/dash_google_ads_weekly.html", office:"50-Rome-Ads",
     title:"Ads Weekly Overview", sub:"ROME // SNAPSHOT DASH"},
-  dash_ytd_weekly_sales: {path:"40-Maeve-Books/dash_ytd_weekly_sales.html", office:"40-Maeve-Books",
-    title:"YTD Weekly Sales", sub:"MAEVE // SNAPSHOT DASH"},
+  dash_ytd_weekly_sales: {path:"40-Maeve-Books/dash_books_live.html", office:"40-Maeve-Books",
+    title:"The Books", sub:"MAEVE // LIVE"},
 };
 Object.keys(ART).forEach(id=>{
   GRAPH.nodes.push({id, path:ART[id].path, office:ART[id].office, kind:"note", val:5});
@@ -1613,7 +1613,10 @@ async function openArtifact(id){
   try{
     const r = await fetch(`${BRAIN_FN}?t=${encodeURIComponent(TOKEN)}&op=file&path=${encodeURIComponent(a.path)}`);
     if (!r.ok) throw 0;
-    const html = await r.text();
+    // The dashboards fetch their own numbers now, so they need the key. The
+    // iframe is sandboxed without same-origin, so it cannot read it from here
+    // by itself. Stamp it in on the way through.
+    const html = (await r.text()).split("__HUB_TOKEN__").join(TOKEN);
     ART_CACHE[id] = html; f.srcdoc = html;
   }catch(e){
     f.srcdoc = '<body style="background:#0d0d0d;color:#8a2e2e;font-family:monospace;padding:40px">could not load the dashboard right now</body>';
