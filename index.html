@@ -284,6 +284,35 @@
     #msgok{bottom:calc(62px + env(safe-area-inset-bottom,0px))}
     #drawer{padding:10px}
     .panel-box{padding:24px 20px 30px;max-height:94dvh}
+/* ---- desk chat. The hub could hear and speak; it just had nobody to talk to. ---- */
+#chat{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;width:min(760px,92vw);
+  max-height:46dvh;overflow-y:auto;z-index:60;display:none;
+  background:linear-gradient(180deg,rgba(8,12,15,.94),rgba(8,12,15,.99));
+  border:1px solid var(--line);padding:14px 16px 15px;
+  box-shadow:0 24px 70px rgba(0,0,0,.78)}
+#chat.on{display:block}
+#chat .cm{margin-bottom:13px}
+#chat .cm:last-child{margin-bottom:0}
+#chat .cw{font-size:9px;letter-spacing:.26em;color:var(--ink3);margin-bottom:5px}
+#chat .cm.you .cw{color:var(--ink2)}
+#chat .cm.desk .cw{color:var(--acc)}
+#chat .cm.err .cw{color:var(--alert)}
+#chat .ct{font-size:13px;line-height:1.66;color:var(--ink);white-space:pre-wrap}
+#chat .cm.you .ct{color:var(--ink2)}
+#chat .cm.err .ct{color:var(--alert)}
+#chat .cl{font-size:9.5px;letter-spacing:.14em;color:var(--ink3);margin-top:7px}
+#chat .dots span{display:inline-block;width:4px;height:4px;border-radius:50%;
+  background:var(--acc);margin-right:5px;opacity:.28;animation:cbl 1.1s infinite}
+#chat .dots span:nth-child(2){animation-delay:.15s}
+#chat .dots span:nth-child(3){animation-delay:.3s}
+@keyframes cbl{0%,100%{opacity:.22}50%{opacity:1}}
+#chatx{position:absolute;top:9px;right:11px;font-size:9px;letter-spacing:.2em;
+  color:var(--ink3);cursor:pointer;background:none;border:0;font-family:inherit;padding:2px 4px}
+#chatx:hover{color:var(--alert)}
+/* vsay() wrote to #msgok and toggled .on, but no .on rule existed, so it was invisible */
+#msgok.on{opacity:1}
+@media (max-width:720px){ #chat{bottom:84px;width:94vw;max-height:52dvh;padding:12px 13px} }
+
   }
 
 </style>
@@ -353,6 +382,8 @@
   <button id="msgbtn">SEND</button>
 </div>
 <div id="msgok"></div>
+<div id="chat"><button id="chatx">CLEAR</button><div id="chatbody"></div></div>
+
 
 <div id="artview"><div class="av-bar"><span class="av-edge"></span>
   <span class="av-t" id="av-t"></span><span class="av-s" id="av-s"></span>
@@ -2240,6 +2271,157 @@ async function liveVitals(){
 
 layoutHome();
 setPanels(FEED, VITALS, "FLOOR.FEED", "VITALS");
+
+/* ================================================================
+   THE DESKS CAN ANSWER NOW.
+   The hub could already hear (startListening -> runCommand) and
+   speak (speak() -> ElevenLabs), but neither was wired to the ten
+   reasoning desks. sendMsg() only appended text to an inbox file
+   and never read a reply back. This connects the desk function to
+   both the microphone and the box.
+   ================================================================ */
+const DESK_FN = "https://mojjazwjwksypjtljusz.supabase.co/functions/v1/desk";
+const CHAT = {};
+let ASKING = false, VOICE_REPLY = true;
+
+function chatEl(){ return document.getElementById("chat"); }
+function chatBody(){ return document.getElementById("chatbody"); }
+function chatShow(on){ const c = chatEl(); if (c) c.classList.toggle("on", !!on); }
+function chatClear(){ const b = chatBody(); if (b) b.innerHTML = ""; chatShow(false); }
+function chatScroll(){ const c = chatEl(); if (c) c.scrollTop = c.scrollHeight; }
+
+function chatPush(kind, label, text, looked){
+  const b = chatBody(); if (!b) return;
+  const d = document.createElement("div"); d.className = "cm " + kind;
+  const w = document.createElement("div"); w.className = "cw"; w.textContent = label;
+  const t = document.createElement("div"); t.className = "ct"; t.textContent = text;
+  d.appendChild(w); d.appendChild(t);
+  if (looked && looked.length){
+    const seen = [];
+    for (let i = 0; i < looked.length; i++){
+      const tl = looked[i] && looked[i].tool;
+      if (tl && seen.indexOf(tl) < 0) seen.push(tl);
+    }
+    if (seen.length){
+      const l = document.createElement("div"); l.className = "cl";
+      l.textContent = "looked at: " + seen.join(", ");
+      d.appendChild(l);
+    }
+  }
+  b.appendChild(d); chatShow(true); chatScroll();
+}
+
+function chatThinking(who, on){
+  const b = chatBody(); if (!b) return;
+  let n = document.getElementById("cthink");
+  if (!on){ if (n) n.remove(); return; }
+  if (n) return;
+  n = document.createElement("div"); n.id = "cthink"; n.className = "cm desk";
+  n.innerHTML = '<div class="cw">' + String(who).toUpperCase() + '</div>' +
+                '<div class="ct dots"><span></span><span></span><span></span></div>';
+  b.appendChild(n); chatShow(true); chatScroll();
+}
+
+/* speak() caps at 2500 chars. Cut on a sentence so a desk never stops mid-word. */
+function forSpeech(s){
+  s = String(s || "").replace(/[*_`#>|]/g, "").replace(/\n{2,}/g, ". ").replace(/\n/g, " ").trim();
+  if (s.length <= 1200) return s;
+  const cut = s.slice(0, 1200);
+  const stop = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("? "), cut.lastIndexOf("! "));
+  return (stop > 400 ? cut.slice(0, stop + 1) : cut) +
+         " That is the short version. The rest is on screen.";
+}
+
+async function askDesk(text, who){
+  text = String(text || "").trim(); if (!text) return;
+  who = String(who || focusEmp || "maddox").toLowerCase();
+  if (ASKING){ flashOK(who.toUpperCase() + " IS STILL THINKING", true); return; }
+  ASKING = true;
+  chatPush("you", "YOU", text);
+  chatThinking(who, true);
+  try{
+    const hist = (CHAT[who] || []).slice(-6);
+    const r = await fetch(DESK_FN + "?t=" + encodeURIComponent(TOKEN), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ who: who, message: text, history: hist })
+    });
+    let j = {};
+    try { j = await r.json(); } catch (e) { j = {}; }
+    chatThinking(who, false);
+    if (!r.ok || !j.reply) throw new Error(j.detail || j.error || ("desk " + r.status));
+    if (!CHAT[who]) CHAT[who] = [];
+    CHAT[who].push({ role: "user", content: text }, { role: "assistant", content: j.reply });
+    chatPush("desk", String(j.who || who).toUpperCase(), j.reply, j.looked);
+    if (VOICE_REPLY){ try { await speak(forSpeech(j.reply), null, who); } catch (e) {} }
+  } catch (e){
+    chatThinking(who, false);
+    chatPush("err", "COULD NOT REACH " + who.toUpperCase(), String((e && e.message) || e));
+  } finally { ASKING = false; }
+}
+
+/* Typing now asks the desk. "note:" keeps the old behaviour of filing it to their inbox. */
+async function sendOrAsk(){
+  const el = document.getElementById("msgin");
+  const raw = el ? String(el.value || "").trim() : "";
+  if (!raw) return;
+  if (/^(note|log)\s*:/i.test(raw)) return sendMsg();
+  el.value = "";
+  await askDesk(raw, focusEmp);
+}
+
+(function wireComposer(){
+  const mb = document.getElementById("msgbtn");
+  if (mb) mb.onclick = sendOrAsk;
+  const mi = document.getElementById("msgin");
+  if (mi){
+    /* capture phase + stopImmediatePropagation so the original Enter handler,
+       which files to the inbox, does not also fire */
+    mi.addEventListener("keydown", function(ev){
+      if (ev.key === "Enter"){
+        ev.preventDefault(); ev.stopImmediatePropagation();
+        sendOrAsk();
+      }
+    }, true);
+  }
+  document.addEventListener("click", function(e){
+    if (e.target && e.target.id === "chatx") chatClear();
+  });
+})();
+
+/* The mic already worked. It just had nothing to ask. */
+const DESK_NAMES = ["maddox","rio","cash","quinn","hawke","maeve","rome","iris","lyric","ruby"];
+const _runCommand0 = runCommand;
+runCommand = function(raw){
+  const t = String(raw || "").trim();
+  const low = t.toLowerCase();
+  if (!t) return _runCommand0(raw);
+  if (/^\s*(stop|quiet|shut up|never mind|nevermind|cancel)\b/.test(low)) return _runCommand0(raw);
+  if (/\b(board meeting|brief me|briefing|needs input|go home|home screen|back to the grid)\b/.test(low))
+    return _runCommand0(raw);
+
+  /* "hey mav, how are we looking against june" -> put Maeve on stage and ask her */
+  const m = low.match(/^(?:hey|yo|ok|okay|hi|hello)?[\s,]*([a-z]{3,})[\s,]+(.{6,})$/);
+  if (m){
+    let guess = null;
+    for (let i = 0; i < DESK_NAMES.length; i++){
+      const n = DESK_NAMES[i];
+      if (n === m[1] || n.indexOf(m[1].slice(0, 3)) === 0){ guess = n; break; }
+    }
+    if (guess){
+      try { heard(t); } catch (e) {}
+      if (typeof layoutFocus === "function" && focusEmp !== guess) layoutFocus(guess);
+      return askDesk(m[2], guess);
+    }
+  }
+  /* already stood in front of a desk, and it is plainly a question not a command */
+  if (focusEmp && t.split(/\s+/).length >= 3){
+    try { heard(t); } catch (e) {}
+    return askDesk(t, focusEmp);
+  }
+  return _runCommand0(raw);
+};
+
 liveVitals();
 setInterval(liveVitals, 5 * 60 * 1000);
 </script>
