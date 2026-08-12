@@ -284,6 +284,9 @@
     #msgok{bottom:calc(62px + env(safe-area-inset-bottom,0px))}
     #drawer{padding:10px}
     .panel-box{padding:24px 20px 30px;max-height:94dvh}
+  }
+
+
 /* ---- desk chat. The hub could hear and speak; it just had nobody to talk to. ---- */
 #chat{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;width:min(760px,92vw);
   max-height:46dvh;overflow-y:auto;z-index:60;display:none;
@@ -312,8 +315,6 @@
 /* vsay() wrote to #msgok and toggled .on, but no .on rule existed, so it was invisible */
 #msgok.on{opacity:1}
 @media (max-width:720px){ #chat{bottom:84px;width:94vw;max-height:52dvh;padding:12px 13px} }
-
-  }
 
 </style>
 </head>
