@@ -2325,7 +2325,14 @@ function chatThinking(who, on){
 
 /* speak() caps at 2500 chars. Cut on a sentence so a desk never stops mid-word. */
 function forSpeech(s){
-  s = String(s || "").replace(/[*_`#>|]/g, "").replace(/\n{2,}/g, ". ").replace(/\n/g, " ").trim();
+  /* Nobody wants a Google Docs URL read out character by character. */
+  s = String(s || "")
+    .replace(/https?:\/\/\S+/gi, "the link is on screen")
+    .replace(/\bwww\.\S+/gi, "the link is on screen")
+    .replace(/[*_`#>|]/g, "")
+    .replace(/\n{2,}/g, ". ").replace(/\n/g, " ")
+    .replace(/(the link is on screen)(?:[^a-z0-9]+the link is on screen)+/gi, "$1")
+    .replace(/\s{2,}/g, " ").trim();
   if (s.length <= 1200) return s;
   const cut = s.slice(0, 1200);
   const stop = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("? "), cut.lastIndexOf("! "));
