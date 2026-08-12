@@ -363,6 +363,7 @@
 const REPO = "https://github.com/thehuntersamuel/pitstop-pro-brain/blob/main/";
 const BRAIN_FN = "https://mojjazwjwksypjtljusz.supabase.co/functions/v1/brain";
 const HQ_FN = "https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq";
+const VITALS_FN = "https://mojjazwjwksypjtljusz.supabase.co/functions/v1/vitals";
 const TOKEN = new URLSearchParams(location.search).get("t") || "";
 let GRAPH = {
  "nodes": [
@@ -2094,7 +2095,6 @@ async function liveStats(){
     if (!r.ok) throw 0;
     const s = await r.json();
     if (dot) dot.style.background = "var(--ok)"; if (txt) txt.textContent = "HUB.LIVE";
-    VITALS[2].v = String(s.pos_7d ?? "—");
     SYS_CARD.rows = [["HUB","ONLINE"],["WORKERS","2 LIVE"],["LEADS TODAY", String(s.leads_today ?? 0)],
       ["BRAIN", BRAINN],["NEEDS.INPUT", String(s.needs_input ?? 0)]];
     OFFICE_VITALS.Cash[0].v = (s.pos_7d ?? 4) + " PO'S";
@@ -2213,8 +2213,32 @@ layoutFocus = function(emp){ _layoutFocus(emp);
 makeNode("Maddox", "center");
 OFFICES.filter(o=>o.emp!=="Maddox").forEach(o=>makeNode(o.emp, "employee"));
 GRAPH.nodes.filter(n=>n.kind==="note").forEach(n=>makeNode(n.id, "note"));
+// The right-hand cards were typed by hand, which is how this page ended up
+// still saying JUL in the middle of August. They now come from the tracker
+// sync. Same card shape, so nothing about the layout moves, only the numbers.
+// If the fetch fails the hardcoded values stay put, which is the right way to
+// fail: stale beats blank.
+async function liveVitals(){
+  if (!TOKEN) return;
+  try{
+    const r = await fetch(`${VITALS_FN}?t=${encodeURIComponent(TOKEN)}`);
+    if (!r.ok) throw 0;
+    const d = await r.json();
+    // splice rather than reassign: the panels are holding this exact array
+    if (Array.isArray(d.vitals) && d.vitals.length) VITALS.splice(0, VITALS.length, ...d.vitals);
+    if (d.target){
+      TARGET_CARD.k = d.target.k || TARGET_CARD.k;
+      TARGET_CARD.rows = d.target.rows || TARGET_CARD.rows;
+      paintCard(document.getElementById("sideR-card2"), TARGET_CARD);
+    }
+    renderCard("R");
+  }catch(e){ /* leave the hardcoded cards alone */ }
+}
+
 layoutHome();
 setPanels(FEED, VITALS, "FLOOR.FEED", "VITALS");
+liveVitals();
+setInterval(liveVitals, 5 * 60 * 1000);
 </script>
 </body>
 </html>
