@@ -1103,7 +1103,7 @@ const OFFICES = [
   {dir:"60-Iris-Feeds", emp:"Iris", role:"FEEDS"},
   {dir:"70-Lyric-SEO", emp:"Lyric", role:"SEO.CONTENT"},
   {dir:"80-Ruby-CRM", emp:"Ruby", role:"CRM.RETENTION"},
-  {dir:"90-Rio-Bench", emp:"Rio", role:"R&D.BENCH"},
+  {dir:"90-Rio-Bench", emp:"Rio", role:"COO.BENCH"},
 ];
 const byEmp = {}; OFFICES.forEach(o=>byEmp[o.emp]=o);
 const byDir = {}; OFFICES.forEach(o=>byDir[o.dir]=o);
@@ -1282,18 +1282,28 @@ function layoutHome(){
   document.getElementById("hint").style.opacity = 1;
   document.getElementById("crumb").style.opacity = 0;
   document.getElementById("xbtn").style.display = "none";
-  const emps = OFFICES.filter(o=>o.emp!=="Maddox");
+  // The chain of command, drawn. Rio holds the middle because the eight desks
+  // report through him, and every spoke on the page is a real reporting line.
+  // Maddox sits above the ring rather than inside it: she is not the ninth desk,
+  // she runs everything, and Pitstop Pro is only part of what she runs.
+  const MADY = CY - 300;
+  const emps = OFFICES.filter(o=>o.emp!=="Maddox" && o.emp!=="Rio");
   emps.forEach((o,i)=>{
-    const a = -Math.PI/2 + i*(2*Math.PI/emps.length);
-    const x = CX + Math.cos(a)*322, y = CY + Math.sin(a)*247;
-    spoke(CX, CY, x, y, 1);
+    // half a step of offset so the top of the ring stays open and the line
+    // from Maddox down to Rio has a clean channel to travel through
+    const a = -Math.PI/2 + (i + 0.5)*(2*Math.PI/emps.length);
+    const x = CX + Math.cos(a)*320, y = CY + Math.sin(a)*215;
+    spoke(CX, CY, x, y, .8);
     place(o.emp, x, y, {r:35, lines:[o.emp.toUpperCase()], role:o.role, ns:14, oc:OFFICE_COLOR[o.dir]});
   });
   GRAPH.nodes.filter(n=>n.kind==="note").forEach(n=>{
     const o = byDir[n.office]; const p = nodeEls[o.emp]?._pos || {x:CX,y:CY};
     place(n.id, p.x, p.y, {r:6, op:0, lines:[]});
   });
-  place("Maddox", CX, CY, {r:58, lines:["MADDOX"], nameIn:true, ns:19});
+  const rio = byEmp["Rio"];
+  spoke(CX, MADY, CX, CY, 1);
+  place("Rio", CX, CY, {r:44, lines:["RIO"], role:rio.role, ns:15, oc:OFFICE_COLOR[rio.dir]});
+  place("Maddox", CX, MADY, {r:48, lines:["MADDOX"], nameIn:true, ns:17});
 }
 
 function layoutFocus(emp){
