@@ -2654,5 +2654,79 @@ setInterval(liveVitals, 5 * 60 * 1000);
   }, 350);
 })();
 </script>
+<!-- ===== CHAT FORMATTING, added 2026-08-13 =====
+     Hunter, 2026-08-13: "you see the attempted bold text feature doesnt work on
+     these messages right when they use **message**"
+
+     He is right. chatPush does `t.textContent = text`, which is the SAFE thing
+     to do with model output and the reason nothing has ever been able to inject
+     markup into his hub - but it means every asterisk, bullet and heading the
+     desks write shows up raw. They write markdown because that is how they
+     think in lists, and a spec shortlist is exactly where bold and bullets earn
+     their keep.
+
+     So: keep escaping FIRST, always, then re-introduce a small, closed set of
+     tags on the escaped string. Nothing a desk writes can become an element,
+     because by the time these rules run there are no live angle brackets left.
+     Inserted at the LAST </body> by position, not by a global replace - doing
+     that with replace() is what spliced a whole block into two srcdoc strings
+     last night. -->
+<style>
+.ct strong{color:#eaf6fb;font-weight:700}
+.ct em{font-style:italic;opacity:.92}
+.ct code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92em;
+  background:rgba(0,161,207,.13);border:1px solid rgba(0,161,207,.25);
+  border-radius:4px;padding:1px 5px}
+.ct a{color:#4fc3e8;text-decoration:underline;text-underline-offset:2px;word-break:break-word}
+.ct a:hover{color:#8fdcf5}
+.ct .b{display:block;padding-left:1.05em;text-indent:-1.05em}
+</style>
+<script>
+(function(){
+  if (window.__chatMd) return; window.__chatMd = true;
+  if (typeof chatPush !== "function") return;
+
+  function esc(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function md(raw){
+    var s = esc(raw);
+
+    /* [label](url) first, so the bare-url rule below cannot eat the url out of
+       a link that already has a label */
+    s = s.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g,
+                  '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    /* a bare url. It must start a line or follow a space or an open bracket -
+       which is exactly what stops it matching the url INSIDE the href="..."
+       the rule above just wrote. */
+    s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g,
+                  '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+
+    s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+    /* single asterisk italics, but never one that is part of a ** pair */
+    s = s.replace(/(^|[^*\w])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+    s = s.replace(/^\s{0,3}#{1,6}\s*(.+)$/gm, '<strong>$1</strong>');
+    /* a bullet gets a hanging indent so a wrapped line does not slide back
+       under the dot */
+    s = s.replace(/^\s*[-*•]\s+(.*)$/gm, '<span class="b">• $1</span>');
+
+    return s.replace(/\n/g, "<br>");
+  }
+
+  var _push = chatPush;
+  chatPush = function(kind, label, text, looked){
+    var out = _push.apply(this, arguments);
+    try {
+      var b = (typeof chatBody === "function") ? chatBody() : null;
+      var last = b && b.lastElementChild;
+      var ct = last && last.querySelector(".ct");
+      if (ct && ct.className.indexOf("dots") === -1) ct.innerHTML = md(text || "");
+    } catch(e){}
+    return out;
+  };
+})();
+</script>
 </body>
 </html>
