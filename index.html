@@ -1759,13 +1759,21 @@ function dailyBriefText(){
     const c = card || {}; const r = (c.rows || []).find(x=>x[0] === label);
     return r ? r[1] : "";
   };
-  const profit = VITALS[0] || {}, close = VITALS[1] || {}, po = VITALS[2] || {};
+  // By LABEL, not by position. The vitals array is ordered by the vitals
+  // function and that order has already changed once - reading VITALS[1] as
+  // the close rate had the spoken briefing announcing the PO count as a close
+  // rate, and a margin percentage as a number of purchase orders. Out loud,
+  // confidently, every morning. A card that moves must not silently rename
+  // itself on the way to your ears.
+  const byLabel = (frag) => VITALS.find(x=>String(x.k||"").toUpperCase().indexOf(frag) === 0) || {};
+  const profit = byLabel("NET PROFIT"), close = byLabel("CLOSE RATE"), po = byLabel("PO'S");
+  const period = String(profit.k||"").split("//")[1] ? String(profit.k).split("//")[1].trim() : "";
   const gap = rowOf(TARGET_CARD, "GAP"), lever = rowOf(TARGET_CARD, "THE LEVER"),
         table = rowOf(TARGET_CARD, "ON THE TABLE"), needs = rowOf(SYS_CARD, "NEEDS.INPUT");
   const files = (typeof BRAINN === "string" ? BRAINN : "").toLowerCase().replace(/\s*files?$/, "");
   const out = [];
   out.push("Here is where you stand.");
-  if (profit.v) out.push("Net profit for July, " + profit.v + ". " + tidy(profit.m));
+  if (profit.v) out.push("Net profit" + (period ? " for " + period : "") + ", " + profit.v + ". " + tidy(profit.m));
   if (gap) out.push("You are " + gap + " off the twenty thousand a month target.");
   if (lever) out.push("The lever is the " + lever.toLowerCase() + ".");
   if (close.v) out.push("Close rate is " + close.v + ". " + tidy(close.m));
@@ -2047,52 +2055,52 @@ requestAnimationFrame(tick3d);
 /* ---------- side data panels ---------- */
 const C = {Cash:"#6C8EF5",Quinn:"#3FBF8F",Hawke:"#E06C5B",Maeve:"#9B7EDE",Rome:"#E8B23A",
   Iris:"#2FA3A8",Lyric:"#C77BB8",Ruby:"#8CB85C",Rio:"#8A94A0",Maddox:"#00A1CF"};
+// ---------------------------------------------------------------------
+// FLOOR.FEED used to be four typed strings, one of which was still naming a
+// quote from the week this page was built. They now come from
+// hub_floor_feed() in Postgres, spliced into THIS array by liveVitals().
+// The card below is only what shows if that read never lands - and it says
+// so, instead of showing last week's numbers as though they were today's.
 const FEED = [
-  {c:C.Cash, k:"CASH // PO.DESK", v:"0811264H950GA", m:"PO drafted, PDF attached, tracker + CRM updated on their own.",
-   rows:[["SUPPLIER","KATOOL"],["VALUE","$2,898"],["STATE","DRAFTED"]]},
-  {c:C.Quinn, k:"QUINN // QUOTES", v:"$1,299.99", m:"Kent Grady draft order built from one Slack reply.",
-   rows:[["SKU","V300541SSR"],["DISCOUNT","$100 V/FR"],["LINK","SENT"]]},
-  {c:C.Maeve, k:"MAEVE // BOOKS", v:"05:00 ET", m:"GCLID sweep daily. Google gets credit for phone orders.",
-   rows:[["COVERAGE","65%"],["KEYED / 30D","$47,106"]]},
-  {c:C.Maddox, k:"MADDOX // CORE", v:"29 FILES", m:"Brain synced to the private repo. All offices current.",
-   rows:[["OFFICES","10"],["LAST PUSH","2 MIN AGO"]]},
+  {c:"#8A94A0", k:"FLOOR.FEED", v:"NO READ", live:false,
+   m:"The hub has not answered yet. Nothing here is a number on purpose: a stale figure with no warning is worse than an empty card.",
+   rows:[["SOURCE","hub_floor_feed()"],["STATE","WAITING"]]},
 ];
+// Same story on the right. liveVitals() splices the real cards in from the
+// tracker sync. If that fails, this is what stays on screen - a card that
+// admits it, rather than a July figure sitting unlabelled in August.
 const VITALS = [
-  {c:C.Maeve, k:"NET PROFIT // JUL", v:"$14,611", m:"6.6% margin. April ran 12.8 — the gap is the close rate.",
-   rows:[["REVENUE","$221.5K"],["EBITDA","$44.5K"],["AD SPEND","$28.1K"]]},
-  {c:C.Quinn, k:"CLOSE RATE // JUL", v:"31.2%", m:"April was 62.9%. Worth ~$21.5K/mo in gross profit.",
-   rows:[["DRAFTS / JUL","96"],["SAME-DAY","24%"],["DEAD >14D","$1.31M"]]},
-  {c:C.Cash, k:"PO'S // THIS WEEK", v:"4", m:"All drafted by Cash without a hand on the wheel.",
-   rows:[["PENDING","0"],["NEEDS INPUT","0"]]},
-  {c:C.Rome, k:"BREAK-EVEN ROAS", v:"4.37x", m:"After COGS. Anything under this loses money.",
-   rows:[["4H110","3.63x"],["4H850","5.22x"],["2-POST","~6.1x"]]},
+  {c:"#9B7EDE", k:"VITALS", v:"NO READ", live:false,
+   m:"The vitals function has not answered. No number is shown here because an old number with a current-looking label is how a dashboard starts lying.",
+   rows:[["SOURCE","vitals"],["STATE","WAITING"]]},
 ];
+// Filled by liveVitals() from hub_sys_card(). WORKERS and SWEEPS used to sit
+// here as "2 LIVE" and "2 SCHEDULED" - remembered numbers, not measured ones.
+// Nothing in the database counts Apps Script triggers, so they are gone rather
+// than guessed, and FEEDS and LAST SYNC took their place because those are
+// real queries and they are what tells you whether the rest of the screen can
+// be trusted at all.
 const SYS_CARD = {c:"#00A1CF", k:"SYS.STATUS", v:"", m:"",
-  rows:[["HUB","ONLINE"],["WORKERS","2 LIVE"],["SWEEPS","2 SCHEDULED"],["BRAIN","29 FILES"],["NEEDS.INPUT","0"]]};
+  rows:[["HUB","..."],["STATE","WAITING ON THE HUB"]]};
 const TARGET_CARD = {c:"#00A1CF", k:"TARGET // $20K NET / MO", v:"", m:"",
   rows:[["JUL ACTUAL","$14.6K"],["GAP","$5.4K"],["THE LEVER","CLOSE RATE"],["ON THE TABLE","+$21.5K/MO"]]};
 function oc(list, emp){ return list.map(x=>Object.assign({c:C[emp]}, x)); }
-const OFFICE_VITALS = {
-  Cash:[{k:"CASH // THIS WEEK", v:"4 PO'S", m:"Drafted end to end. Zero pending questions."},
-        {k:"CASH // WAREHOUSES", v:"23+", m:"Canonical list plus Slack-saved extras."}],
-  Quinn:[{k:"QUINN // CLOSE RATE", v:"31.2%", m:"July. The single biggest lever in the business."},
-         {k:"QUINN // OPEN BOOK", v:"$1.43M", m:"303 open drafts. 91% statistically dead after 14 days."}],
-  Maeve:[{k:"MAEVE // NET JUL", v:"$14,611", m:"Real P&L from the tracker, not Shopify gross."},
-          {k:"MAEVE // OFFLINE", v:"65%", m:"Of quote forms now carry a click ID for Google."}],
-  Rome:[{k:"ROME // CPC", v:"+69%", m:"Since Oct 2025. The profit squeeze in one number."},
-         {k:"ROME // PMAX", v:"$350/day", m:"Frozen at the efficient level. Do not touch."}],
-  Hawke:[{k:"HAWKE // PINGS", v:"<60s", m:"Contact form to #leads in under a minute."}],
-  Iris:[{k:"IRIS // FEED", v:"1 SOURCE", m:"Simprosys only. The dual-feed conflict is dead."}],
-  Lyric:[{k:"LYRIC // RANK", v:"PG 4", m:"For 4-post car lifts. The long game is organic."}],
-  Ruby:[{k:"RUBY // FLOWS", v:"2 LIVE", m:"Lift and Storage owner series running."}],
-  Rio:[{k:"RIO // NEXT", v:"VOICE", m:"ElevenLabs voices, board meetings, self-writing notes."}],
-  Maddox:[{k:"MADDOX // BRAIN", v:"29 FILES", m:"10 offices. Every rule and number in one web."},
-          {k:"MADDOX // NEEDS YOU", v:"0", m:"No halted jobs waiting on an answer."}],
-};
+// Per-desk cards. Every one of these was a hand-typed literal, which is how
+// Iris came to report "1 SOURCE" on a day she was watching twelve feeds and
+// 7,137 items. They come from desk_vitals() in Postgres now and this object
+// is filled by liveVitals(). A desk missing from it renders the NOT WIRED
+// card in layoutFocus, which is the honest answer for a desk with no data.
+const OFFICE_VITALS = {};
 const panelState = {L:{list:FEED, i:0}, R:{list:VITALS, i:0}};
 function cardHTML(d){
   const vsz = (d.v||"").length > 11 ? ' style="font-size:18px;letter-spacing:.06em;word-break:break-all"' : '';
-  let s = '<div class="k">'+d.k+'</div>';
+  // live===false means this desk has NO data source yet. It has to read
+  // differently from a desk that is reporting fine, or the page quietly turns
+  // "we cannot see this" into "this is fine" - which is the failure that looks
+  // healthiest and therefore never gets investigated.
+  const tag = (d.live === false)
+    ? ' <span style="opacity:.55;font-size:9px;letter-spacing:.12em">· NOT WIRED</span>' : '';
+  let s = '<div class="k">'+d.k+tag+'</div>';
   if (d.v) s += '<div class="v"'+vsz+'>'+d.v+'</div>';
   if (d.m) s += '<div class="m">'+d.m+'</div>';
   if (d.rows && d.rows.length)
@@ -2130,9 +2138,13 @@ async function liveStats(){
     if (!r.ok) throw 0;
     const s = await r.json();
     if (dot) dot.style.background = "var(--ok)"; if (txt) txt.textContent = "HUB.LIVE";
-    SYS_CARD.rows = [["HUB","ONLINE"],["WORKERS","2 LIVE"],["LEADS TODAY", String(s.leads_today ?? 0)],
-      ["BRAIN", BRAINN],["NEEDS.INPUT", String(s.needs_input ?? 0)]];
-    OFFICE_VITALS.Cash[0].v = (s.pos_7d ?? 4) + " PO'S";
+    // SYS.STATUS is owned by hub_sys_card() now. This used to rebuild it every
+    // 60 seconds with "WORKERS 2 LIVE" typed into the middle of it, and with
+    // LEADS TODAY read from a table nothing writes to - a permanent zero that
+    // read as a quiet day rather than as a missing writer.
+    // Cash's card is owned by desk_vitals() now. Patching it here as well
+    // gave one number two writers, and they disagreed - this one counted the
+    // test PO rows, desk_vitals() excludes them.
     paintCard(document.getElementById("sideL-card2"), SYS_CARD);
     renderCard("R");
   }catch(e){ if (dot) dot.style.background = "var(--alert)"; if (txt) txt.textContent = "HUB.OFFLINE"; }
@@ -2154,12 +2166,12 @@ async function liveGraph(){
 }
 liveGraph();
 
-let BRAINN = "29 FILES";
+let BRAINN = "--";   // the real count arrives with the first brain read
 if (TOKEN) fetch(`${BRAIN_FN}?t=${encodeURIComponent(TOKEN)}`).then(r=>r.json()).then(m=>{
   if (!m || !m.files) return;
   BRAINN = m.files + " FILES";
   SYS_CARD.rows = SYS_CARD.rows.map(r=>r[0] === "BRAIN" ? ["BRAIN", BRAINN] : r);
-  OFFICE_VITALS.Maddox[0].v = BRAINN; FEED[3].v = BRAINN;
+  // Maddox's file count and the whole floor feed come from desk_vitals().
   paintCard(document.getElementById("sideL-card2"), SYS_CARD);
 }).catch(()=>{});
 
@@ -2242,7 +2254,9 @@ layoutFocus = function(emp){ _layoutFocus(emp);
   const cm = document.getElementById("composer");
   cm.classList.add("on");
   document.getElementById("msgin").placeholder = "TYPE TO " + emp.toUpperCase() + " · FEEDBACK, TASKS, ANYTHING";
-  const ov = oc(OFFICE_VITALS[emp] || [{k:emp.toUpperCase()+" // STATUS", v:"SOON", m:"Reporting hookup pending for this office."}], emp);
+  const ov = oc(OFFICE_VITALS[emp] || [{k:emp.toUpperCase()+" // STATUS", v:"NOT WIRED", live:false,
+    m:"No data source is connected to this desk yet, so there is nothing here to report. That is not the same as a quiet week.",
+    rows:[["SOURCE","NONE"]]}], emp);
   setPanels(ov, VITALS, emp.toUpperCase()+".VITALS", "VITALS"); };
 
 makeNode("Maddox", "center");
@@ -2261,13 +2275,28 @@ async function liveVitals(){
     const d = await r.json();
     // splice rather than reassign: the panels are holding this exact array
     if (Array.isArray(d.vitals) && d.vitals.length) VITALS.splice(0, VITALS.length, ...d.vitals);
+    if (Array.isArray(d.feed)   && d.feed.length)   FEED.splice(0, FEED.length, ...d.feed);
+    // Per-desk cards straight from desk_vitals(). The object is REPLACED, not
+    // merged, so a desk that stops reporting disappears from the page instead
+    // of leaving its last good numbers up with nothing to say they are old.
+    if (d.desks && typeof d.desks === "object"){
+      Object.keys(OFFICE_VITALS).forEach(k=>{ delete OFFICE_VITALS[k]; });
+      Object.keys(d.desks).forEach(k=>{ OFFICE_VITALS[k] = d.desks[k]; });
+      if (mode !== "home" && focusEmp && OFFICE_VITALS[focusEmp])
+        setPanels(oc(OFFICE_VITALS[focusEmp], focusEmp), VITALS,
+                  focusEmp.toUpperCase()+".VITALS", "VITALS");
+    }
     if (d.target){
       TARGET_CARD.k = d.target.k || TARGET_CARD.k;
       TARGET_CARD.rows = d.target.rows || TARGET_CARD.rows;
       paintCard(document.getElementById("sideR-card2"), TARGET_CARD);
     }
-    renderCard("R");
-  }catch(e){ /* leave the hardcoded cards alone */ }
+    if (d.sys && d.sys.rows){
+      SYS_CARD.rows = d.sys.rows;
+      paintCard(document.getElementById("sideL-card2"), SYS_CARD);
+    }
+    renderCard("L"); renderCard("R");
+  }catch(e){ /* the NO READ cards stay up, and they say NO READ on their face */ }
 }
 
 layoutHome();
