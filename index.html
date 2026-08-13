@@ -2433,5 +2433,226 @@ runCommand = function(raw){
 liveVitals();
 setInterval(liveVitals, 5 * 60 * 1000);
 </script>
+<!-- ===== STOP CONTROL, added 2026-08-12 =====
+     Hunter asked for a stop button. One already existed but ONLY on the button
+     that started the audio, so once he scrolled or opened a desk view there was
+     no way to shut a desk up. This one floats, is always reachable while audio
+     is playing, and Escape does the same thing.
+     Appended deliberately rather than edited into the voice block: this file is
+     100KB and runs the whole hub, so a bolt-on that cannot break what is already
+     working beats a surgical edit that might. -->
+<style>
+#hardstop{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:99999;
+  display:none;align-items:center;gap:9px;padding:11px 20px;border-radius:999px;cursor:pointer;
+  font:600 13px/1 Helvetica,Arial,sans-serif;letter-spacing:.09em;color:#fff;
+  background:rgba(10,14,18,.94);border:1.5px solid #00A1CF;
+  box-shadow:0 6px 26px rgba(0,0,0,.55);backdrop-filter:blur(6px);
+  transition:background .15s,border-color .15s}
+#hardstop:hover{background:#00A1CF;border-color:#00A1CF}
+#hardstop.on{display:flex}
+#hardstop .sq{width:11px;height:11px;background:#fff;border-radius:2px}
+#hardstop .hint{opacity:.6;font-weight:400;letter-spacing:.04em}
+@media(max-width:600px){#hardstop .hint{display:none}}
+</style>
+<div id="hardstop" role="button" tabindex="0" aria-label="Stop talking">
+  <span class="sq"></span><span>STOP</span><span class="hint">or press Esc</span>
+</div>
+<script>
+(function(){
+  var el = document.getElementById("hardstop");
+  function talking(){
+    try { if (typeof SPEAKING !== "undefined" && SPEAKING) return true; } catch(e){}
+    try { if (typeof AUDIO !== "undefined" && AUDIO && !AUDIO.paused) return true; } catch(e){}
+    var a = document.querySelectorAll("audio");
+    for (var i=0;i<a.length;i++) if (!a[i].paused && !a[i].ended) return true;
+    return false;
+  }
+  function kill(){
+    // Prefer the app's own teardown so buttons and the meeting loop reset too.
+    try { if (typeof stopSpeaking === "function") { stopSpeaking(); } } catch(e){}
+    var a = document.querySelectorAll("audio");
+    for (var i=0;i<a.length;i++){ try { a[i].pause(); a[i].currentTime = 0; } catch(e){} }
+    el.classList.remove("on");
+  }
+  el.addEventListener("click", kill);
+  el.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " ") { e.preventDefault(); kill(); } });
+  document.addEventListener("keydown", function(e){
+    if (e.key !== "Escape") return;
+    // Do not steal Escape from someone closing a panel unless audio is live.
+    if (talking()) { e.preventDefault(); kill(); }
+  });
+  setInterval(function(){ el.classList.toggle("on", talking()); }, 200);
+})();
+</script>
+<!-- ===== VOICE MANNERS, added 2026-08-13 =====
+     Two things Hunter asked for, bolted on rather than surgically edited into
+     the 100KB voice block above, for the same reason the STOP button was:
+     a bolt-on cannot break what already works.
+
+       1. "by default lets keep if i text that the employee doesnt read aloud.
+           only if i talk to it."
+       2. "if i butt in to add something else they stop and listen to what i ask
+           so they can reason and continue the convo like 2 normal humans."
+-->
+<style>
+#bargechip{position:fixed;z-index:99999;display:none;align-items:center;gap:7px;
+  transform:translateY(-50%);padding:9px 14px;border-radius:999px;cursor:pointer;
+  font:600 11px/1 Helvetica,Arial,sans-serif;letter-spacing:.1em;color:#cfe9f2;
+  background:rgba(10,14,18,.9);border:1px solid rgba(0,161,207,.55);
+  box-shadow:0 6px 26px rgba(0,0,0,.5);backdrop-filter:blur(6px);white-space:nowrap;
+  transition:opacity .15s,border-color .15s}
+#bargechip:hover{border-color:#00A1CF}
+#bargechip.off{opacity:.45}
+#bargechip .dot{width:7px;height:7px;border-radius:50%;background:#00A1CF}
+#bargechip.off .dot{background:#6b7b82}
+@media(max-width:700px){#bargechip{display:none !important}}
+</style>
+<div id="bargechip" role="button" tabindex="0" title="When on, start talking and the desk stops to listen.">
+  <span class="dot"></span><span id="bargelbl">BARGE-IN ON</span>
+</div>
+<script>
+(function(){
+  if (window.__voiceManners) return; window.__voiceManners = true;
+
+  /* ==================================================================
+     1. TYPED IN, TYPED BACK.
+     askDesk read one flag, VOICE_REPLY, and never asked how the question
+     arrived, so a line typed at midnight got read out loud. The mic path
+     runs through runCommand while LISTENING is still true - onresult fires
+     before onend - so that is the one honest signal for "he actually spoke".
+     Everything else is typing.
+  ================================================================== */
+  var spokeIt = false;
+
+  if (typeof runCommand === "function"){
+    var _rc = runCommand;
+    runCommand = function(raw){
+      try { if (typeof LISTENING !== "undefined" && LISTENING) spokeIt = true; } catch(e){}
+      return _rc.apply(this, arguments);
+    };
+  }
+
+  if (typeof askDesk === "function"){
+    var _ask = askDesk;
+    askDesk = function(text, who){
+      var viaVoice = spokeIt; spokeIt = false;
+      var prev = true;
+      try { prev = VOICE_REPLY; } catch(e){}
+      try { if (!viaVoice) VOICE_REPLY = false; } catch(e){}
+      var restore = function(){ try { VOICE_REPLY = prev; } catch(e){} };
+      var out;
+      try { out = _ask.apply(this, arguments); }
+      catch(e){ restore(); throw e; }
+      /* askDesk awaits speak() inside itself, so the flag has to stay wrong
+         until the whole promise settles, not just until it returns. */
+      if (out && typeof out.then === "function")
+        return out.then(function(v){ restore(); return v; },
+                        function(e){ restore(); throw e; });
+      restore(); return out;
+    };
+  }
+
+  /* ==================================================================
+     2. BARGE IN.
+     The hard part is not hearing Hunter. It is NOT hearing the desk: the
+     laptop mic hears the laptop speaker, so a naive listener interrupts
+     itself inside two words and the hub looks broken.
+     We know exactly what the desk is saying, because we handed that string
+     to speak(). So anything the mic returns that is only those same words
+     is thrown away as echo. He has to say at least two words the desk is
+     not currently saying. On headphones there is no echo and it just works.
+  ================================================================== */
+  var nowSaying = "", BARGE = null, bargeOn = true, fails = 0;
+
+  if (typeof speak === "function"){
+    var _speak = speak;
+    speak = function(text, btn, who){ nowSaying = String(text || ""); return _speak.apply(this, arguments); };
+  }
+
+  function words(s){
+    return String(s||"").toLowerCase().replace(/[^a-z0-9 ]+/g," ")
+           .split(/\s+/).filter(function(w){ return w.length > 2; });
+  }
+  function isEcho(t){
+    var said = words(nowSaying), got = words(t);
+    if (!got.length) return true;
+    var fresh = 0;
+    for (var i=0;i<got.length;i++) if (said.indexOf(got[i]) === -1) fresh++;
+    return fresh < 2;
+  }
+  function talking(){
+    try { if (typeof SPEAKING !== "undefined" && SPEAKING) return true; } catch(e){}
+    try { if (typeof AUDIO !== "undefined" && AUDIO && !AUDIO.paused) return true; } catch(e){}
+    var a = document.querySelectorAll("audio");
+    for (var i=0;i<a.length;i++) if (!a[i].paused && !a[i].ended) return true;
+    return false;
+  }
+
+  function cut(t){
+    stopBarge();
+    try { if (typeof stopSpeaking === "function") stopSpeaking(); } catch(e){}
+    var a = document.querySelectorAll("audio");
+    for (var i=0;i<a.length;i++){ try { a[i].pause(); a[i].currentTime = 0; } catch(e){} }
+    try { if (typeof heard === "function") heard(t); } catch(e){}
+    spokeIt = true;   /* he SAID it, so the answer comes back out loud */
+    try { runCommand(t); } catch(e){}
+  }
+
+  function startBarge(){
+    if (!bargeOn || BARGE || fails >= 2) return;
+    try { if (typeof LISTENING !== "undefined" && LISTENING) return; } catch(e){}
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    var r = new SR();
+    r.lang = "en-US"; r.continuous = true; r.interimResults = true; r.maxAlternatives = 1;
+    r.onerror = function(e){
+      /* a blocked mic is not worth retrying forever, and it must never nag */
+      if (e && (e.error === "not-allowed" || e.error === "service-not-allowed")) bargeOn = false;
+      fails++;
+    };
+    r.onend = function(){ if (BARGE === r) BARGE = null; };
+    r.onresult = function(ev){
+      var t = "";
+      for (var i = ev.resultIndex; i < ev.results.length; i++) t += ev.results[i][0].transcript;
+      t = t.trim();
+      if (t.length < 6) return;
+      if (isEcho(t)) return;
+      cut(t);
+    };
+    BARGE = r;
+    try { r.start(); } catch(e){ BARGE = null; fails++; }
+  }
+
+  function stopBarge(){
+    var r = BARGE; BARGE = null;
+    if (r){ try { r.onresult = null; r.stop(); } catch(e){} }
+  }
+
+  var chip = document.getElementById("bargechip"), lbl = document.getElementById("bargelbl");
+  function paintChip(){
+    if (!chip) return;
+    chip.classList.toggle("off", !bargeOn);
+    if (lbl) lbl.textContent = bargeOn ? "BARGE-IN ON" : "BARGE-IN OFF";
+    var s = document.getElementById("hardstop");
+    var r = s ? s.getBoundingClientRect() : null;
+    if (!r || r.width === 0){ chip.style.display = "none"; return; }
+    chip.style.display = "flex";
+    chip.style.left = (r.right + 10) + "px";
+    chip.style.top  = (r.top + r.height / 2) + "px";
+  }
+  function toggle(){ bargeOn = !bargeOn; if (!bargeOn) stopBarge(); fails = 0; paintChip(); }
+  if (chip){
+    chip.addEventListener("click", toggle);
+    chip.addEventListener("keydown", function(e){
+      if (e.key === "Enter" || e.key === " "){ e.preventDefault(); toggle(); }
+    });
+  }
+
+  setInterval(function(){
+    if (talking()) startBarge(); else stopBarge();
+    paintChip();
+  }, 350);
+})();
+</script>
 </body>
 </html>
