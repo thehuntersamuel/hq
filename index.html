@@ -2728,5 +2728,87 @@ setInterval(liveVitals, 5 * 60 * 1000);
   };
 })();
 </script>
+<!-- ===== CHAT PANEL OWNERSHIP, added 2026-08-13 =====
+     Hunter, 2026-08-13: "i clicked off iris and this box is still up"
+
+     The chat panel was opened by chatPush and closed by nothing except the
+     CLEAR button. Walk back to the grid, or step over to Rome, and Iris's
+     answer is still sitting there in front of you - which on Rome's desk is
+     worse than untidy, it reads like Rome said it.
+
+     The panel belongs to ONE desk at a time. Leave that desk and it goes away.
+     The desk's actual memory (CHAT[who]) is untouched, so she still knows what
+     you were talking about when you come back - only the box on screen closes.
+     Escape closes it too, but only when nothing is speaking, so it never steals
+     Escape from the STOP button. -->
+<style>
+#chatclose{position:absolute;top:8px;right:74px;z-index:5;cursor:pointer;
+  font:600 11px/1 Helvetica,Arial,sans-serif;letter-spacing:.1em;color:#7b8a92;
+  background:none;border:0;padding:6px 8px}
+#chatclose:hover{color:#cfe9f2}
+</style>
+<script>
+(function(){
+  if (window.__chatOwner) return; window.__chatOwner = true;
+
+  var owner = null;
+
+  function panel(){ return document.getElementById("chat"); }
+  function isOpen(){ var c = panel(); return !!(c && c.classList.contains("on")); }
+  function hide(){ try { chatShow(false); } catch(e){} }
+  function wipe(){
+    var b = (typeof chatBody === "function") ? chatBody() : null;
+    if (b) b.innerHTML = "";
+    hide();
+  }
+
+  /* whoever was last asked owns the panel */
+  if (typeof askDesk === "function"){
+    var _ask = askDesk;
+    askDesk = function(text, who){
+      var w = String(who || (typeof focusEmp !== "undefined" ? focusEmp : "") || "").toLowerCase();
+      if (w && owner && w !== owner) wipe();
+      if (w) owner = w;
+      return _ask.apply(this, arguments);
+    };
+  }
+
+  /* back to the grid: nobody owns it, so it closes */
+  if (typeof layoutHome === "function"){
+    var _home = layoutHome;
+    layoutHome = function(){ owner = null; wipe(); return _home.apply(this, arguments); };
+  }
+
+  /* stepping to another desk: the old transcript does not come along */
+  if (typeof layoutFocus === "function"){
+    var _focus = layoutFocus;
+    layoutFocus = function(emp){
+      var e = String(emp || "").toLowerCase();
+      if (owner && e !== owner) { owner = null; wipe(); }
+      return _focus.apply(this, arguments);
+    };
+  }
+
+  /* an explicit close, next to CLEAR. CLEAR wipes; this just puts it away. */
+  var c = panel();
+  if (c){
+    var btn = document.createElement("button");
+    btn.id = "chatclose"; btn.type = "button"; btn.textContent = "CLOSE";
+    btn.title = "Close this panel (Esc)";
+    btn.addEventListener("click", function(ev){ ev.stopPropagation(); hide(); });
+    c.appendChild(btn);
+  }
+
+  document.addEventListener("keydown", function(ev){
+    if (ev.key !== "Escape" || !isOpen()) return;
+    /* the STOP button owns Escape while audio is live - do not fight it */
+    try { if (typeof SPEAKING !== "undefined" && SPEAKING) return; } catch(e){}
+    try { if (typeof AUDIO !== "undefined" && AUDIO && !AUDIO.paused) return; } catch(e){}
+    var a = document.querySelectorAll("audio");
+    for (var i=0;i<a.length;i++) if (!a[i].paused && !a[i].ended) return;
+    hide();
+  });
+})();
+</script>
 </body>
 </html>
