@@ -2098,7 +2098,10 @@ function cardHTML(d){
   // differently from a desk that is reporting fine, or the page quietly turns
   // "we cannot see this" into "this is fine" - which is the failure that looks
   // healthiest and therefore never gets investigated.
-  const tag = (d.live === false)
+  // The tag IS the signal. If the card's own value already reads NOT WIRED,
+  // printing it twice on one card looks like a rendering bug rather than
+  // emphasis, and a control that looks broken stops being read.
+  const tag = (d.live === false && String(d.v||"").toUpperCase() !== "NOT WIRED")
     ? ' <span style="opacity:.55;font-size:9px;letter-spacing:.12em">· NOT WIRED</span>' : '';
   let s = '<div class="k">'+d.k+tag+'</div>';
   if (d.v) s += '<div class="v"'+vsz+'>'+d.v+'</div>';
