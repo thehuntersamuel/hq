@@ -9,15 +9,26 @@
 <style>html,body{height:100%;margin:0;background:#0A0B0D;color:#EDF1F4;font-family:system-ui,-apple-system,Segoe UI,sans-serif}body{display:grid;place-items:center}.box{width:min(420px,calc(100% - 40px));border:1px solid #262C34;background:#12151A;padding:30px}.box h1{margin:0 0 10px;font-size:20px;letter-spacing:.12em;text-transform:uppercase}.box p{color:#97A1AC;font-size:13px;line-height:1.6}.box button{width:100%;margin-top:18px;border:0;background:#00A1CF;color:#03222C;font-weight:800;padding:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}.sub{margin-top:16px;color:#59626C;font:10px ui-monospace,monospace;letter-spacing:.08em}</style>
 </head>
 <body>
-<main class="box"><h1>Pitstop HQ</h1><p>Opening secure account access. This public shell contains no operational data, session token, Hub key, or employee credentials.</p>
-<form id="launch" method="post" action="https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq?op=entry"><input id="ticket" name="ticket" type="hidden" value=""><button type="submit">Open secure HQ</button></form>
-<div class="sub">SECURE POST ENTRY · HTTPONLY SESSION</div></main>
+<main class="box"><h1 id="title">Pitstop HQ</h1><p id="copy">Opening secure account access. This public shell contains no operational data, session token, Hub key, or employee credentials.</p>
+<form id="launch" method="post" action="https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq?op=entry"><input id="ticket" name="ticket" type="hidden" value=""><button id="launchbtn" type="submit">Open secure HQ</button></form>
+<div class="sub" id="sub">SECURE POST ENTRY · HTTPONLY SESSION</div></main>
 <script>
 (function(){
   const form=document.getElementById('launch');
+  const btn=document.getElementById('launchbtn');
+  const title=document.getElementById('title');
+  const copy=document.getElementById('copy');
+  const sub=document.getElementById('sub');
   const ticket=new URLSearchParams(location.search).get('setup')||'';
-  try{history.replaceState(null,'',location.pathname)}catch(e){}
-  if(ticket){form.action='https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq?op=bootstrap';document.getElementById('ticket').value=ticket;}
+  if(ticket){
+    form.action='https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq?op=bootstrap';
+    document.getElementById('ticket').value=ticket;
+    title.textContent='Pitstop HQ Owner Setup';
+    copy.textContent='Create the first individual owner account. This one-time setup proof is submitted securely and is never stored in the public site.';
+    btn.textContent='Create owner account';
+    sub.textContent='ONE-TIME OWNER ENROLLMENT · SECURE POST';
+    return;
+  }
   setTimeout(()=>form.submit(),40);
 })();
 </script>
