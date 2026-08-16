@@ -1,0 +1,20 @@
+{
+  "name": "Pitstop Hub",
+  "short_name": "Pitstop Hub",
+  "description": "Secure entry to the Pitstop Pro Executive HQ.",
+  "id": "/hq/",
+  "start_url": "/hq/",
+  "scope": "/hq/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#02060b",
+  "theme_color": "#07111d",
+  "icons": [
+    {
+      "src": "pitstop-hub-app-icon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
