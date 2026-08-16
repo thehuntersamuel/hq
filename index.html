@@ -5,9 +5,21 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="refresh" content="0;url=https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq">
 <title>Pitstop HQ</title>
-<style>html,body{height:100%;margin:0;background:#0A0B0D;color:#EDF1F4;font-family:system-ui,-apple-system,Segoe UI,sans-serif}body{display:grid;place-items:center}.box{width:min(420px,calc(100% - 40px));border:1px solid #262C34;background:#12151A;padding:30px}.box h1{margin:0 0 10px;font-size:20px;letter-spacing:.12em;text-transform:uppercase}.box p{color:#97A1AC;font-size:13px;line-height:1.6}.box a{display:block;margin-top:18px;text-align:center;text-decoration:none;background:#00A1CF;color:#03222C;font-weight:800;padding:12px;letter-spacing:.08em;text-transform:uppercase}</style>
+<style>html,body{height:100%;margin:0;background:#0A0B0D;color:#EDF1F4;font-family:system-ui,-apple-system,Segoe UI,sans-serif}body{display:grid;place-items:center}.box{width:min(420px,calc(100% - 40px));border:1px solid #262C34;background:#12151A;padding:30px}.box h1{margin:0 0 10px;font-size:20px;letter-spacing:.12em;text-transform:uppercase}.box p{color:#97A1AC;font-size:13px;line-height:1.6}.box button{width:100%;margin-top:18px;border:0;background:#00A1CF;color:#03222C;font-weight:800;padding:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}.sub{margin-top:16px;color:#59626C;font:10px ui-monospace,monospace;letter-spacing:.08em}</style>
 </head>
-<body><main class="box"><h1>Pitstop HQ</h1><p>Secure account access is required. This public shell contains no operational data or credentials.</p><a href="https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq" rel="noreferrer">Open secure HQ</a></main></body>
+<body>
+<main class="box"><h1>Pitstop HQ</h1><p>Opening secure account access. This public shell contains no operational data, session token, Hub key, or employee credentials.</p>
+<form id="launch" method="post" action="https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq?op=entry"><input id="ticket" name="ticket" type="hidden" value=""><button type="submit">Open secure HQ</button></form>
+<div class="sub">SECURE POST ENTRY · HTTPONLY SESSION</div></main>
+<script>
+(function(){
+  const form=document.getElementById('launch');
+  const ticket=new URLSearchParams(location.search).get('setup')||'';
+  try{history.replaceState(null,'',location.pathname)}catch(e){}
+  if(ticket){form.action='https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq?op=bootstrap';document.getElementById('ticket').value=ticket;}
+  setTimeout(()=>form.submit(),40);
+})();
+</script>
+</body>
 </html>
