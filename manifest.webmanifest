@@ -7,8 +7,8 @@
   "scope": "/hq/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#02060b",
-  "theme_color": "#07111d",
+  "background_color": "#f5f7fa",
+  "theme_color": "#f5f7fa",
   "icons": [
     {
       "src": "pitstop-hub-app-icon.png",
