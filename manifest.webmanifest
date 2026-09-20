@@ -1,20 +1,17 @@
 {
-  "name": "Pitstop Hub",
-  "short_name": "Pitstop Hub",
-  "description": "Secure entry to the Pitstop Pro Executive HQ.",
+  "name": "Ecom Pros CRM",
+  "short_name": "Ecom Pros",
+  "description": "Ecom Pros CRM: quotes, POs, inbox and every desk in one place.",
   "id": "/hq/",
   "start_url": "/hq/",
   "scope": "/hq/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f5f7fa",
-  "theme_color": "#f5f7fa",
+  "theme_color": "#0b0c0e",
   "icons": [
-    {
-      "src": "pitstop-hub-app-icon.png",
-      "sizes": "1254x1254",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "ep-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "ep-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "ep-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

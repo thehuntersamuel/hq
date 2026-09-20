@@ -8,55 +8,56 @@
 <meta name="theme-color" content="#f5f7fa">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Pitstop Hub">
-<title>Pitstop Hub</title>
+<meta name="apple-mobile-web-app-title" content="Ecom Pros">
+<title>Ecom Pros CRM</title>
 <link rel="icon" type="image/png" href="favicon.png">
-<link rel="apple-touch-icon" href="pitstop-hub-app-icon.png">
+<link rel="apple-touch-icon" href="ep-apple-touch-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;background:#f5f7fa;color:#0f172a;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 body{display:grid;place-items:center}
 .box{width:min(340px,84vw);text-align:center}
-.logo{width:88px;height:88px;border-radius:24%;object-fit:cover;box-shadow:0 12px 30px rgba(0,120,200,.18)}
+.logo{width:88px;height:88px;object-fit:contain}
 .title{margin:16px 0 6px;font-weight:800;font-size:21px;letter-spacing:.02em}
-.title span{color:#0891d1}
+.title span{color:#0a6ee8}
 .step{min-height:17px;color:#64748b;font-size:12px;font-weight:600}
 .bar{height:4px;margin-top:16px;border-radius:4px;background:#e2e8f0;overflow:hidden}
-.bar i{display:block;height:100%;width:4%;background:linear-gradient(90deg,#16bdff,#0786de);animation:grow 6s cubic-bezier(.1,.7,.2,1) forwards}
+.bar i{display:block;height:100%;width:4%;background:linear-gradient(90deg,#1d8cff,#0b3fb0);animation:grow 6s cubic-bezier(.1,.7,.2,1) forwards}
 @keyframes grow{to{width:30%}}
 form{margin:0}
-button{display:none;width:100%;min-height:46px;margin-top:20px;border:0;border-radius:12px;background:linear-gradient(135deg,#16bdff,#0786de);color:#001421;font:800 13px/1 Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+button{display:none;width:100%;min-height:46px;margin-top:20px;border:0;border-radius:12px;background:linear-gradient(135deg,#1d8cff,#0b3fb0);color:#fff;font:800 13px/1 Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .setup button,.noscript button{display:block}
 </style>
 </head>
 <body>
 <!-- 2026-09-17 Hunter: this page only hands the browser to the Hub. It looks exactly like the Hub's
-     own load screen so opening the Hub is one continuous loading screen, no button. -->
+own load screen so opening the Hub is one continuous loading screen, no button.
+2026-09-20: rebranded to the Ecom Pros CRM with the EP mark. -->
 <main class="box" id="box">
-  <img class="logo" src="favicon.png" alt="">
-  <div class="title" id="title">Pitstop <span>Hub</span></div>
-  <div class="step" id="step">Signing you in</div>
-  <div class="bar"><i></i></div>
-  <form id="launch" method="post" action="https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq?op=entry">
-    <input id="ticket" name="ticket" type="hidden" value="">
-    <noscript><div class="noscript"><button type="submit">Open Hub</button></div></noscript>
-    <button id="launchbtn" type="submit">Open Hub</button>
-  </form>
+<img class="logo" src="favicon.png" alt="">
+<div class="title" id="title">Ecom Pros <span>CRM</span></div>
+<div class="step" id="step">Signing you in</div>
+<div class="bar"><i></i></div>
+<form id="launch" method="post" action="https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq?op=entry">
+<input id="ticket" name="ticket" type="hidden" value="">
+<noscript><div class="noscript"><button type="submit">Open CRM</button></div></noscript>
+<button id="launchbtn" type="submit">Open CRM</button>
+</form>
 </main>
 <script>
 (function(){
-  var form=document.getElementById('launch');
-  var ticket=new URLSearchParams(location.search).get('setup')||'';
-  if(ticket){
-    form.action='https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq?op=bootstrap';
-    document.getElementById('ticket').value=ticket;
-    document.getElementById('title').innerHTML='Owner <span>Setup</span>';
-    document.getElementById('step').textContent='Create the first owner account.';
-    document.getElementById('box').classList.add('setup');
-    return;
-  }
-  form.submit();
+var form=document.getElementById('launch');
+var ticket=new URLSearchParams(location.search).get('setup')||'';
+if(ticket){
+form.action='https://mojjazwjwksypjtljusz.supabase.co/functions/v1/hq?op=bootstrap';
+document.getElementById('ticket').value=ticket;
+document.getElementById('title').innerHTML='Owner <span>Setup</span>';
+document.getElementById('step').textContent='Create the first owner account.';
+document.getElementById('box').classList.add('setup');
+return;
+}
+form.submit();
 })();
 </script>
 </body>
